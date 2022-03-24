@@ -21,6 +21,9 @@ include_directories(${MLIR_INCLUDE_DIRS})
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 
+# llvm support
+llvm_map_components_to_libnames(llvm_libs support)
+
 # 3rdparty
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
 
@@ -31,4 +34,8 @@ add_executable(puzzle
 
   src/frontend/ast.cpp
   src/frontend/parser.cpp
+)
+
+target_link_libraries(puzzle
+  ${llvm_libs}
 )

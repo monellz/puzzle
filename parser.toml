@@ -49,9 +49,8 @@ start = 'Module'
 '//[^\n]*' = '_Eps' # line comment
 '/\*[^*]*(\*[^/][^*]*)*\*/' = '_Eps' # block comment
 '\s+' = '_Eps'
-'\d' = 'DigitLit' # short for DigitLiteral
-'\d+|(0x[0-9a-fA-F]+)' = 'IntLit'
-'[-+]?\d+[.]\d*([eE][-+]?\d+)?' = 'FloatLit'
+'[-+]?\d+|(0x[0-9a-fA-F]+)' = 'IntLit'
+'[-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?' = 'FloatLit'
 '[_A-Za-z]\w*' = 'Ident'
 '.' = '_Err'
 
@@ -68,9 +67,9 @@ rhs = [
 lhs = 'VarDecl'
 ty = 'std::vector<Decl>'
 rhs = [
-  { rhs = ['In', 'Lt', 'DigitLit', 'Gt', 'DeclList', 'Semi'], act = 'int _dim = (int)strtol(_3.piece.data(), nullptr, 10); for (Decl &d : _5) { d.kind = Decl::kIn; d.dim = _dim;} __ = std::move(_5);'},
-  { rhs = ['Out', 'Lt', 'DigitLit', 'Gt', 'DeclList', 'Semi'], act = 'int _dim = (int)strtol(_3.piece.data(), nullptr, 10); for (Decl &d : _5) { d.kind = Decl::kOut; d.dim = _dim;} __ = std::move(_5);'},
-  { rhs = ['Grid', 'Lt', 'DigitLit', 'Gt', 'DeclList', 'Semi'], act = 'int _dim = (int)strtol(_3.piece.data(), nullptr, 10); for (Decl &d : _5) { d.kind = Decl::kGrid; d.dim = _dim;} __ = std::move(_5);'},
+  { rhs = ['In', 'Lt', 'IntLit', 'Gt', 'DeclList', 'Semi'], act = 'int _dim = (int)strtol(_3.piece.data(), nullptr, 10); for (Decl &d : _5) { d.kind = Decl::kIn; d.dim = _dim;} __ = std::move(_5);'},
+  { rhs = ['Out', 'Lt', 'IntLit', 'Gt', 'DeclList', 'Semi'], act = 'int _dim = (int)strtol(_3.piece.data(), nullptr, 10); for (Decl &d : _5) { d.kind = Decl::kOut; d.dim = _dim;} __ = std::move(_5);'},
+  { rhs = ['Grid', 'Lt', 'IntLit', 'Gt', 'DeclList', 'Semi'], act = 'int _dim = (int)strtol(_3.piece.data(), nullptr, 10); for (Decl &d : _5) { d.kind = Decl::kGrid; d.dim = _dim;} __ = std::move(_5);'},
   { rhs = ['Const', 'DeclList', 'Semi'], act = 'for (Decl &d : _2) { d.kind = Decl::kConst;} __ = std::move(_2);'},
 ]
 
@@ -95,6 +94,7 @@ lhs = 'Decl'
 ty = 'Decl'
 rhs = [
   { rhs = ['Ident', 'Assign', 'FloatLit'], act = 'double _f = strtod(_3.piece.data(), nullptr); __ = Decl{_1.piece, Decl::kConst, 0, _f};'},
+  { rhs = ['Ident', 'Assign', 'IntLit'], act = 'double _f = strtod(_3.piece.data(), nullptr); __ = Decl{_1.piece, Decl::kConst, 0, _f};'},
   { rhs = ['Ident'], act = '__ = Decl{_1.piece, Decl::kUnknown, 0, 0.0};'},
 ]
 
@@ -150,8 +150,8 @@ rhs = [
 lhs = 'Index1'
 ty = 'std::vector<int>'
 rhs = [
-  { rhs = ['Index1', 'Comma', 'IntLit'], act = '_1.push_back((int)strtol(_2.piece.data(), nullptr, 10)); __ = std::move(_1);'},
-  { rhs = ['IntLit'], act = '__ = std::vector<int>((int)strtol(_1.piece.data(), nullptr, 10));'},
+  { rhs = ['Index1', 'Comma', 'IntLit'], act = '_1.push_back((int)strtol(_3.piece.data(), nullptr, 10)); __ = std::move(_1);'},
+  { rhs = ['IntLit'], act = '__ = std::vector<int>({(int)strtol(_1.piece.data(), nullptr, 10)});'},
 ]
 
 
@@ -180,6 +180,7 @@ rhs = [
   { rhs = ['Ident', 'LBrk', 'Index', 'RBrk'], act = '__ = new Access{Expr::kAccess, _1.piece, std::move(_3)};' },
   { rhs = ['Ident'], act = '__ = new Access{Expr::kAccess, _1.piece, std::vector<int>()};' },
   { rhs = ['FloatLit'], act = 'double _f = strtod(_1.piece.data(), nullptr); __ = new FloatLit{Expr::kFloatLit, _f};'},
+  { rhs = ['IntLit'], act = 'double _f = strtod(_1.piece.data(), nullptr); __ = new FloatLit{Expr::kFloatLit, _f};'},
 ]
 
 [[production]]

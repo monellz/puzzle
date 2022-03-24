@@ -35,9 +35,9 @@ diffusive = stencil {
 // eps代表空
 Module -> Module VarDecl | Module KernelDecl | eps
 
-VarDecl -> 'in' '<' DigitLiteral '>' DeclList ';'
-        -> 'out' '<' DigitLiteral '>' DeclList ';'
-        -> 'grid' '<' DigitLiteral '>' DeclList ';'
+VarDecl -> 'in' '<' IntLiteral '>' DeclList ';'
+        -> 'out' '<' IntLiteral '>' DeclList ';'
+        -> 'grid' '<' IntLiteral '>' DeclList ';'
         -> 'const' DeclList ';'
 DeclList  -> DeclList1
 DeclList1 -> DeclList1 ',' Decl | Decl
@@ -71,9 +71,9 @@ Expr -> Expr '+'  Expr
      -> Identifier '[' Index ']'
      -> Identifier
      -> FloatLiteral
+     -> IntLiteral
 
 # literal
-DigitLiteral -> \d
-IntLiteral   -> \d+|(0x[0-9a-fA-F]+)
+IntLiteral   -> [-+]?\d+|(0x[0-9a-fA-F]+)
 FloatLiteral -> [-+]?\d+[.]\d*([eE][-+]?\d+)?
 ```

@@ -8,7 +8,7 @@
 #include <variant>
 #include <vector>
 
-#include "frontend/ast.h"
+#include "puzzle/frontend/ast.h"
 
 using u8 = uint8_t;
 using u16 = uint16_t;
@@ -70,7 +70,7 @@ struct Lexer {
 };
 
 struct Parser {
-  std::variant<Program, Token> parse(Lexer &lexer);
+  std::variant<Module, Token> parse(Lexer &lexer);
 };
 
 #endif
