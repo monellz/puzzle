@@ -21,6 +21,8 @@ include_directories(${MLIR_INCLUDE_DIRS})
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 
+# 3rdparty
+include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
 
 # For this project
 include_directories(${PROJECT_SOURCE_DIR}/include/)

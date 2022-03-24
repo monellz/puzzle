@@ -1,3 +1,3 @@
-#include "ast.h"
+#include "puzzle/frontend/ast.h"
 
-FloatLiteral FloatLiteral::ZERO(Expr::FloatLiteral, 0.0);
+FloatLit FloatLit::ZERO{Expr::kFloatLit, 0.0};

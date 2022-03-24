@@ -1,5 +1,7 @@
 #include <cstdio>
+
+#include "dbg/dbg.h"
 int main(int argc, char** argv) {
-  printf("puzzle\n");
+  dbg("puzzle");
   return 0;
 }

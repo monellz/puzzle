@@ -1,6 +1,9 @@
 #ifndef __AST_H
 #define __AST_H
 
+#include <string_view>
+#include <vector>
+
 struct Expr {
   enum Kind { kAdd, kSub, kMul, kDiv, kMod, kLt, kLe, kGe, kGt, kEq, kNe, kAnd, kOr, kAccess, kFloatLit };
   Kind kind;
