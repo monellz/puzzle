@@ -5,7 +5,7 @@ PROJECT_DIR=$(dirname "${SCRIPT_DIR}")
 
 MLIR_DIR=/home/zhongrunxin/workspace/mlir/llvm-project/build/lib/cmake/mlir
 
-rm -rf build
-mkdir build
-cd build
+mkdir ${PROJECT_DIR}/build
+rm -rf ${PROJECT_DIR}/build/*
+cd ${PROJECT_DIR}/build
 cmake .. -DMLIR_DIR=${MLIR_DIR}

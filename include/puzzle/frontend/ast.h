@@ -1,5 +1,8 @@
+#ifndef __AST_H
+#define __AST_H
+
 struct Expr {
-  enum kind { kAdd, kSub, kMul, kDiv, kMod, kLt, kLe, kGe, kGt, kEq, kNe, kAnd, kOr, kAccess, kFloatLit };
+  enum Kind { kAdd, kSub, kMul, kDiv, kMod, kLt, kLe, kGe, kGt, kEq, kNe, kAnd, kOr, kAccess, kFloatLit };
   Kind kind;
 };
 
@@ -32,14 +35,14 @@ struct If : public Stmt {
   Expr *cond;
   Stmt *on_true;
   Stmt *on_false;  // nullable
-}
+};
 
 struct Block : public Stmt {
   std::vector<Stmt *> stmts;
 };
 
 struct Decl {
-  enum Kind { kConst, kIn, kOut, kUnknown };
+  enum Kind { kConst, kIn, kOut, kGrid, kUnknown };
   std::string_view ident;
   Kind kind;
   int dim;
@@ -51,7 +54,9 @@ struct Kernel {
   Block body;
 };
 
-struct Program {
+struct Module {
   std::vector<Decl> decls;
   std::vector<Kernel> kernels;
 };
+
+#endif

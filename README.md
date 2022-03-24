@@ -4,6 +4,7 @@
 
 - [x] stencil DSL定义
 - [ ] 前端: stencil -> AST
+  - [ ] 打印AST
 
 ## DSL定义
 

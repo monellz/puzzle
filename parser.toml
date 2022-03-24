@@ -1,4 +1,4 @@
-include = '''#include "puzzle/structure/ast.h"'''
+include = '''#include "puzzle/frontend/ast.h"'''
 
 priority = [
   { assoc = 'left', terms = ['Or'] },
@@ -60,7 +60,7 @@ lhs = 'Module'
 ty = 'Module'
 rhs = [
   { rhs = ['Module', 'VarDecl'], act = 'for (Decl &d : _2) { _1.decls.emplace_back(std::move(d)); } __ = std::move(_1);' },
-  { rhs = ['Module', 'KernelDecl'], act = 'for (Kernel &k : _2) { _1.kernels.emplace_back(std::move(k)); } __ = std::move(_1);' },
+  { rhs = ['Module', 'KernelDecl'], act = '_1.kernels.emplace_back(std::move(_2)); __ = std::move(_1);' },
   { rhs = [], act = '__ = Module();' },
 ]
 
@@ -71,7 +71,7 @@ rhs = [
   { rhs = ['In', 'Lt', 'DigitLit', 'Gt', 'DeclList', 'Semi'], act = 'int _dim = (int)strtol(_3.piece.data(), nullptr, 10); for (Decl &d : _5) { d.kind = Decl::kIn; d.dim = _dim;} __ = std::move(_5);'},
   { rhs = ['Out', 'Lt', 'DigitLit', 'Gt', 'DeclList', 'Semi'], act = 'int _dim = (int)strtol(_3.piece.data(), nullptr, 10); for (Decl &d : _5) { d.kind = Decl::kOut; d.dim = _dim;} __ = std::move(_5);'},
   { rhs = ['Grid', 'Lt', 'DigitLit', 'Gt', 'DeclList', 'Semi'], act = 'int _dim = (int)strtol(_3.piece.data(), nullptr, 10); for (Decl &d : _5) { d.kind = Decl::kGrid; d.dim = _dim;} __ = std::move(_5);'},
-  { rhs = ['Const', 'DeclList', 'Semi'], act = 'for (Decl &d : _5) { d.kind = Decl::kConst;} __ = std::move(_5);'},
+  { rhs = ['Const', 'DeclList', 'Semi'], act = 'for (Decl &d : _2) { d.kind = Decl::kConst;} __ = std::move(_2);'},
 ]
 
 [[production]]
@@ -95,7 +95,7 @@ lhs = 'Decl'
 ty = 'Decl'
 rhs = [
   { rhs = ['Ident', 'Assign', 'FloatLit'], act = 'double _f = strtod(_3.piece.data(), nullptr); __ = Decl{_1.piece, Decl::kConst, 0, _f};'},
-  { rhs = ['Ident'], act = '__ = Decl(_1.piece, Decl::kUnknown, 0, 0.0);'},
+  { rhs = ['Ident'], act = '__ = Decl{_1.piece, Decl::kUnknown, 0, 0.0};'},
 ]
 
 [[production]]
@@ -124,7 +124,7 @@ rhs = [
 lhs = 'Stmt'
 ty = 'Stmt *'
 rhs = [
-  { rhs = ['Ident', 'LBrk', 'Index', 'RBrk', 'Assign', 'Expr', 'Semi'], act = '__ = new Assign{Stmt::kAssign, _1.piece, std::move(_3), _4};'},
+  { rhs = ['Ident', 'LBrk', 'Index', 'RBrk', 'Assign', 'Expr', 'Semi'], act = '__ = new Assign{Stmt::kAssign, _1.piece, std::move(_3), _6};'},
   { rhs = ['If', 'LPar', 'Expr', 'RPar', 'Stmt', 'Else0'], act = '__ = new If{Stmt::kIf, _3, _5, _6};'},
   { rhs = ['Block'], act = '__ = new Block{Stmt::kBlock, std::move(_1.stmts)};'},
 ]
@@ -175,7 +175,7 @@ rhs = [
   { rhs = ['Expr', 'Or', 'Expr'], act = '__ = new Binary{Expr::kOr, _1, _3};' },
   { rhs = ['Add', 'Expr'], act = '__ = _2;', prec = 'Unary' },
   { rhs = ['Sub', 'Expr'], act = '__ = new Binary{Expr::kSub, &FloatLit::ZERO, _2};', prec = 'Unary' },
-  { rhs = ['Not', 'Expr'], act = '__ = new Binary{Expr::kEq, 0, &FloatLit::ZERO, _2};', prec = 'Unary' },
+  { rhs = ['Not', 'Expr'], act = '__ = new Binary{Expr::kEq, &FloatLit::ZERO, _2};', prec = 'Unary' },
   { rhs = ['LPar', 'Expr', 'RPar'], act = '__ = _2;' },
   { rhs = ['Ident', 'LBrk', 'Index', 'RBrk'], act = '__ = new Access{Expr::kAccess, _1.piece, std::move(_3)};' },
   { rhs = ['Ident'], act = '__ = new Access{Expr::kAccess, _1.piece, std::vector<int>()};' },
