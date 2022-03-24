@@ -107,9 +107,9 @@ rhs = [
 
 [[production]]
 lhs = 'Block'
-ty = 'Block'
+ty = 'Block *'
 rhs = [
-  { rhs = ['LBrc', 'StmtList' ,'RBrc'], act = '__ = Block{Stmt::kBlock, std::move(_2)};' },
+  { rhs = ['LBrc', 'StmtList' ,'RBrc'], act = '__ = new Block{Stmt::kBlock, std::move(_2)};' },
 ]
 
 [[production]]
@@ -126,7 +126,7 @@ ty = 'Stmt *'
 rhs = [
   { rhs = ['Ident', 'LBrk', 'Index', 'RBrk', 'Assign', 'Expr', 'Semi'], act = '__ = new Assign{Stmt::kAssign, _1.piece, std::move(_3), _6};'},
   { rhs = ['If', 'LPar', 'Expr', 'RPar', 'Stmt', 'Else0'], act = '__ = new If{Stmt::kIf, _3, _5, _6};'},
-  { rhs = ['Block'], act = '__ = new Block{Stmt::kBlock, std::move(_1.stmts)};'},
+  { rhs = ['Block'], act = '__ = _1;'},
 ]
 
 [[production]]
@@ -196,5 +196,5 @@ lhs = 'ExprList1'
 ty = 'std::vector<Expr *>'
 rhs = [
   { rhs = ['ExprList1', 'Comma', 'Expr'], act = '_1.push_back(_3); __ = std::move(_1);' },
-  { rhs = ['Expr'], act = '__ = std::vector{_1};' },
+  { rhs = ['Expr'], act = '__ = std::vector<Expr *>({_1});' },
 ]

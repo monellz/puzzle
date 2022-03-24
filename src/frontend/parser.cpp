@@ -55,7 +55,7 @@ struct Token {
   u32 line, col;
 };
 
-using StackItem = std::variant<Token, Module, std::vector<Decl>, Decl, Kernel, Block, std::vector<Stmt *>, Stmt *,
+using StackItem = std::variant<Token, Module, std::vector<Decl>, Decl, Kernel, Block *, std::vector<Stmt *>, Stmt *,
                                std::vector<int>, Expr *, std::vector<Expr *>>;
 
 struct Lexer {
@@ -914,7 +914,7 @@ std::variant<Module, Token> Parser::parse(Lexer &lexer) {
           case 14: {
             [[maybe_unused]] Token _5(std::move(*std::get_if<Token>(&stk.back().first)));
             stk.pop_back();
-            [[maybe_unused]] Block _4(std::move(*std::get_if<Block>(&stk.back().first)));
+            [[maybe_unused]] Block *_4(std::move(*std::get_if<Block *>(&stk.back().first)));
             stk.pop_back();
             [[maybe_unused]] Token _3(std::move(*std::get_if<Token>(&stk.back().first)));
             stk.pop_back();
@@ -932,7 +932,7 @@ std::variant<Module, Token> Parser::parse(Lexer &lexer) {
             stk.pop_back();
             [[maybe_unused]] Token _1(std::move(*std::get_if<Token>(&stk.back().first)));
             stk.pop_back();
-            __ = Block{Stmt::kBlock, std::move(_2)};
+            __ = new Block{Stmt::kBlock, std::move(_2)};
             break;
           }
           case 16: {
@@ -983,9 +983,9 @@ std::variant<Module, Token> Parser::parse(Lexer &lexer) {
             break;
           }
           case 20: {
-            [[maybe_unused]] Block _1(std::move(*std::get_if<Block>(&stk.back().first)));
+            [[maybe_unused]] Block *_1(std::move(*std::get_if<Block *>(&stk.back().first)));
             stk.pop_back();
-            __ = new Block{Stmt::kBlock, std::move(_1.stmts)};
+            __ = _1;
             break;
           }
           case 21: {
@@ -1247,7 +1247,7 @@ std::variant<Module, Token> Parser::parse(Lexer &lexer) {
           case 51: {
             [[maybe_unused]] Expr *_1(std::move(*std::get_if<Expr *>(&stk.back().first)));
             stk.pop_back();
-            __ = std::vector{_1};
+            __ = std::vector<Expr *>({_1});
             break;
           }
           case 52: {

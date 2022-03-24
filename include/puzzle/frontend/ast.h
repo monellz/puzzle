@@ -60,7 +60,7 @@ struct Decl {
 
 struct Kernel {
   std::string_view ident;
-  Block body;
+  Block *body;
 };
 
 struct Module {
