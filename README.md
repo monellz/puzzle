@@ -77,3 +77,8 @@ Expr -> Expr '+'  Expr
 IntLiteral   -> [-+]?\d+|(0x[0-9a-fA-F]+)
 FloatLiteral -> [-+]?\d+[.]\d*([eE][-+]?\d+)?
 ```
+
+
+## 已知问题
+
+parser部分目前存在内存泄漏问题
