@@ -4,7 +4,7 @@
 
 - [x] stencil DSL定义
 - [ ] 前端: stencil -> AST
-  - [ ] 打印AST
+  - [x] 打印AST
 
 ## DSL定义
 
@@ -78,6 +78,60 @@ IntLiteral   -> [-+]?\d+|(0x[0-9a-fA-F]+)
 FloatLiteral -> [-+]?\d+[.]\d*([eE][-+]?\d+)?
 ```
 
+## AST
+
+```
+Module:
+  Decl (ident: ph, kind: kIn, dim: 2, init: 0)
+  Decl (ident: flx, kind: kOut, dim: 2, init: 0)
+  Decl (ident: lap, kind: kGrid, dim: 2, init: 0)
+  Decl (ident: lap_factor, kind: kConst, dim: 0, init: 4)
+  Kernel (ident: laplacian)
+    Block {
+      Assign (lap at [0, 0]) {
+        Binary - {
+          Binary + {
+            Binary + {
+              Binary + {
+                Access ph at [1, 0]
+                Access phi at [-1, 0]
+              }
+              Access phi at [0, 1]
+            }
+            Access phi at [0, -1]
+          }
+          Binary * {
+            Access lap_factor
+            Access phi at [0, 0]
+          }
+        }
+      }
+    }
+  Kernel (ident: diffusive)
+    Block {
+      Assign (flx at [0, 0]) {
+        Binary - {
+          Access lap at [1, 0]
+          Access lap at [0, 0]
+        }
+      }
+      If ( cond / on_true ) {
+        Binary > {
+          Binary * {
+            Access flx at [0, 0]
+            Binary - {
+              Access phi at [1, 0]
+              Access phi at [0, 0]
+            }
+          }
+          FloatLit 0
+        }
+        Assign (flx at [0, 0]) {
+          FloatLit 0
+        }
+      }
+    }
+```
 
 ## 已知问题
 

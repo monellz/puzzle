@@ -1,6 +1,7 @@
 #ifndef __AST_H
 #define __AST_H
 
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -18,7 +19,7 @@ struct Binary : Expr {
 struct Access : Expr {
   static bool classof(Expr *p) { return p->kind == Expr::kAccess; }
   std::string_view ident;
-  std::vector<int> dims;
+  std::vector<int> index;
 };
 
 struct FloatLit : Expr {
@@ -66,6 +67,7 @@ struct Kernel {
 struct Module {
   std::vector<Decl> decls;
   std::vector<Kernel> kernels;
+  void dump();
 };
 
 #endif
