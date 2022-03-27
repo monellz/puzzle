@@ -1206,7 +1206,7 @@ std::variant<Module, Token> Parser::parse(Lexer &lexer) {
           case 45: {
             [[maybe_unused]] Token _1(std::move(*std::get_if<Token>(&stk.back().first)));
             stk.pop_back();
-            __ = new Access{Expr::kAccess, _1.piece, std::vector<int>()};
+            __ = new Const{Expr::kConst, _1.piece};
             break;
           }
           case 46: {

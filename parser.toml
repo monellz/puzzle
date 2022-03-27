@@ -178,7 +178,7 @@ rhs = [
   { rhs = ['Not', 'Expr'], act = '__ = new Binary{Expr::kEq, &FloatLit::ZERO, _2};', prec = 'Unary' },
   { rhs = ['LPar', 'Expr', 'RPar'], act = '__ = _2;' },
   { rhs = ['Ident', 'LBrk', 'Index', 'RBrk'], act = '__ = new Access{Expr::kAccess, _1.piece, std::move(_3)};' },
-  { rhs = ['Ident'], act = '__ = new Access{Expr::kAccess, _1.piece, std::vector<int>()};' },
+  { rhs = ['Ident'], act = '__ = new Const{Expr::kConst, _1.piece};' },
   { rhs = ['FloatLit'], act = 'double _f = strtod(_1.piece.data(), nullptr); __ = new FloatLit{Expr::kFloatLit, _f};'},
   { rhs = ['IntLit'], act = 'double _f = strtod(_1.piece.data(), nullptr); __ = new FloatLit{Expr::kFloatLit, _f};'},
 ]

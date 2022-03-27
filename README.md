@@ -101,7 +101,7 @@ Module:
             Access phi at [0, -1]
           }
           Binary * {
-            Access lap_factor
+            Const lap_factor
             Access phi at [0, 0]
           }
         }

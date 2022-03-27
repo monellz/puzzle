@@ -6,7 +6,7 @@
 #include <vector>
 
 struct Expr {
-  enum Kind { kAdd, kSub, kMul, kDiv, kMod, kLt, kLe, kGe, kGt, kEq, kNe, kAnd, kOr, kAccess, kFloatLit };
+  enum Kind { kAdd, kSub, kMul, kDiv, kMod, kLt, kLe, kGe, kGt, kEq, kNe, kAnd, kOr, kAccess, kConst, kFloatLit };
   Kind kind;
 };
 
@@ -20,6 +20,11 @@ struct Access : Expr {
   static bool classof(Expr *p) { return p->kind == Expr::kAccess; }
   std::string_view ident;
   std::vector<int> index;
+};
+
+struct Const : Expr {
+  static bool classof(Expr *p) { return p->kind == Expr::kConst; }
+  std::string_view ident;
 };
 
 struct FloatLit : Expr {

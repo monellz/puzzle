@@ -68,7 +68,7 @@ struct ASTdumper {
         auto a = static_cast<Assign*>(s);
         assert(a->index.size() >= 1);
         std::string index_str = std::to_string(a->index[0]);
-        for (int i = 1; i < a->index.size(); ++i) {
+        for (size_t i = 1; i < a->index.size(); ++i) {
           index_str += ", " + std::to_string(a->index[i]);
         }
 
@@ -81,7 +81,7 @@ struct ASTdumper {
       case Stmt::kBlock: {
         auto b = static_cast<Block*>(s);
         std::cout << "Block {\n";
-        for (int i = 0; i < b->stmts.size(); ++i) {
+        for (size_t i = 0; i < b->stmts.size(); ++i) {
           dump(b->stmts[i]);
         }
         indent.indent();
@@ -163,7 +163,7 @@ struct ASTdumper {
         std::cout << "Access " << a->ident << "\n";
       } else {
         std::string index_str = std::to_string(a->index[0]);
-        for (int i = 1; i < a->index.size(); ++i) {
+        for (size_t i = 1; i < a->index.size(); ++i) {
           index_str += ", " + std::to_string(a->index[i]);
         }
         std::cout << "Access " << a->ident << " at [" << index_str << "]\n";
@@ -171,6 +171,9 @@ struct ASTdumper {
     } else if (FloatLit::classof(e)) {
       auto f = static_cast<FloatLit*>(e);
       std::cout << "FloatLit " << f->val << "\n";
+    } else if (Const::classof(e)) {
+      auto c = static_cast<Const*>(e);
+      std::cout << "Const " << c->ident << "\n";
     } else {
       UNREACHABLE();
     }
