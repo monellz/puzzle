@@ -19,7 +19,8 @@ message(STATUS "LLVM_DEFINITIONS: ${LLVM_DEFINITIONS}")
 include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(${MLIR_INCLUDE_DIRS})
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
-add_definitions(${LLVM_DEFINITIONS})
+
+add_definitions(${LLVM_DEFINITIONS} -DDBG_MACRO_NO_WARNING)
 
 # llvm support
 llvm_map_components_to_libnames(llvm_libs support)

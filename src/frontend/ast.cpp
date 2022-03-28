@@ -46,8 +46,6 @@ class Dumper {
   Dumper() : cur_level(0) {}
 
   void dump(Module *m) {
-    Indent indent(cur_level);
-    indent();
     llvm::errs() << "Module " << loc(m) << "\n";
     for (auto &d : m->decls) {
       dump(d.get());
