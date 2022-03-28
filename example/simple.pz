@@ -1,12 +1,12 @@
-in<2> ph;
-out<2> flx;
+In<2> phi;
+Out<2> flx;
 
-grid<2> lap;
-const lap_factor = 4.0;
+Grid<2> lap;
+Const lap_factor = 4.0;
 
 // laplacian
 laplacian = stencil {
- lap[0, 0] = ph[1, 0] + phi[-1, 0] + phi[0, 1] + phi[0, -1] - lap_factor * phi[0, 0];
+ lap[0, 0] = phi[1, 0] + phi[-1, 0] + phi[0, 1] + phi[0, -1] - lap_factor * phi[0, 0];
 };
 
 // diffusive flux

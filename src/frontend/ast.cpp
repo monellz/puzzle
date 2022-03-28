@@ -1,191 +1,236 @@
 #include "puzzle/frontend/ast.h"
 
-#include <cassert>
-#include <fstream>
-#include <iostream>
-
 #include "dbg/dbg.h"
+#include "llvm/ADT/Twine.h"
+#include "llvm/ADT/TypeSwitch.h"
+#include "llvm/Support/raw_ostream.h"
 #include "puzzle/util/err.h"
 
-FloatLit FloatLit::ZERO{Expr::kFloatLit, 0.0};
+namespace puzzle::ast {
 
 namespace {
 
-struct Indent {
-  Indent(int& level) : level(level) {
-    ++level;
-    indent();
+class Dumper {
+ public:
+  struct Indent {
+    explicit Indent(int &level) : level(level) { ++level; }
+    void operator()() {
+      for (int i = 0; i < level; ++i) {
+        llvm::errs() << "  ";
+      }
+    }
+    ~Indent() { --level; }
+    int &level;
+  };
+
+  template <typename T>
+  std::string loc(T *node) {
+    const auto &loc = node->loc;
+    return (llvm::Twine("@") + loc.fn + ":" + llvm::Twine(loc.line) + ":" + llvm::Twine(loc.col)).str();
   }
-  void indent() {
-    for (int i = 0; i < level; ++i) {
-      std::cout << "  ";
+
+  template <typename T>
+  std::string vec_str(std::vector<T> &vec) {
+    if (vec.size() == 0)
+      return "[]";
+    else {
+      std::string str = (llvm::Twine("[") + llvm::Twine(vec[0])).str();
+      for (size_t i = 1; i < vec.size(); ++i) {
+        str += (llvm::Twine(",") + llvm::Twine(vec[i])).str();
+      }
+      str += "]";
+      return str;
     }
   }
-  ~Indent() { --level; }
-  int& level;
-};
 
-struct ASTdumper {
-  int cur_level;
-  ASTdumper() : cur_level(0) {}
+  Dumper() : cur_level(0) {}
 
-  void dump(Kernel& k) {
+  void dump(Module *m) {
     Indent indent(cur_level);
-    std::cout << "Kernel (ident: " << k.ident << ")\n";
-    dump(k.body);
+    indent();
+    llvm::errs() << "Module " << loc(m) << "\n";
+    for (auto &d : m->decls) {
+      dump(d.get());
+    }
+    for (auto &i : m->infos) {
+      dump(i.get());
+    }
+    for (auto &k : m->kernels) {
+      dump(k.get());
+    }
   }
 
-  void dump(Decl& d) {
+  void dump(Decl *d) {
     Indent indent(cur_level);
-    std::string kind_str;
-    switch (d.kind) {
+    std::string kind_str = "unknown";
+    std::string init_str = "";
+    switch (d->kind) {
       case Decl::kConst:
-        kind_str = "kConst";
+        kind_str = "Const";
+        init_str = std::string(", init: ") + std::to_string(d->init);
         break;
       case Decl::kIn:
-        kind_str = "kIn";
+        kind_str = "In";
         break;
       case Decl::kOut:
-        kind_str = "kOut";
+        kind_str = "Out";
         break;
       case Decl::kGrid:
-        kind_str = "kGrid";
+        kind_str = "Grid";
         break;
       case Decl::kUnknown:
-        kind_str = "kUnknown";
+        kind_str = "Unknown";
         break;
       default:
         UNREACHABLE();
     }
-    std::cout << "Decl (ident: " << d.ident << ", kind: " << kind_str << ", dim: " << d.dim << ", init: " << d.init
-              << ")\n";
+    indent();
+    llvm::errs() << "Decl { kind: " << kind_str << ", ident: " << d->ident << ", rank: " << d->rank << init_str << " } "
+                 << loc(d) << "\n";
   }
 
-  void dump(Stmt* s) {
+  void dump(Info *i) {
     Indent indent(cur_level);
-    switch (s->kind) {
-      case Stmt::kAssign: {
-        auto a = static_cast<Assign*>(s);
-        assert(a->index.size() >= 1);
-        std::string index_str = std::to_string(a->index[0]);
-        for (size_t i = 1; i < a->index.size(); ++i) {
-          index_str += ", " + std::to_string(a->index[i]);
-        }
-
-        std::cout << "Assign (" << a->ident << " at [" << index_str << "]) {\n";
-        dump(a->rhs);
-        indent.indent();
-        std::cout << "}\n";
+    std::string kind_str = "unknown";
+    switch (i->kind) {
+      case Info::kUpperBound:
+        kind_str = "UpperBound";
         break;
-      }
-      case Stmt::kBlock: {
-        auto b = static_cast<Block*>(s);
-        std::cout << "Block {\n";
-        for (size_t i = 0; i < b->stmts.size(); ++i) {
-          dump(b->stmts[i]);
-        }
-        indent.indent();
-        std::cout << "}\n";
+      case Info::kLowerBound:
+        kind_str = "LowerBound";
         break;
-      }
-      case Stmt::kIf: {
-        auto f = static_cast<If*>(s);
-        std::cout << "If ( cond / on_true " << (f->on_false != nullptr ? "/ on_false " : "") << ") {\n";
-        dump(f->cond);
-        dump(f->on_true);
-        if (f->on_false != nullptr) dump(f->on_false);
-        indent.indent();
-        std::cout << "}\n";
+      case Info::kPad:
+        kind_str = "Pad";
         break;
-      }
+      case Info::kUnknown:
+        kind_str = "Unknown";
+        break;
       default:
         UNREACHABLE();
     }
+    indent();
+    llvm::errs() << "Info { kind: " << kind_str << ", ident: " << i->ident << ", "
+                 << "hint: " << vec_str(i->hint) << " } " << loc(i) << "\n";
   }
 
-  void dump(Expr* e) {
+  void dump(Kernel *k) {
     Indent indent(cur_level);
-    if (Binary::classof(e)) {
-      auto b = static_cast<Binary*>(e);
-      std::string op_str;
-      switch (e->kind) {
-        case Expr::kAdd:
-          op_str = "+";
-          break;
-        case Expr::kSub:
-          op_str = "-";
-          break;
-        case Expr::kMul:
-          op_str = "*";
-          break;
-        case Expr::kDiv:
-          op_str = "/";
-          break;
-        case Expr::kMod:
-          op_str = "%";
-          break;
-        case Expr::kLt:
-          op_str = "<";
-          break;
-        case Expr::kLe:
-          op_str = "<=";
-          break;
-        case Expr::kGt:
-          op_str = ">";
-          break;
-        case Expr::kGe:
-          op_str = ">=";
-          break;
-        case Expr::kEq:
-          op_str = "==";
-          break;
-        case Expr::kNe:
-          op_str = "!=";
-          break;
-        case Expr::kAnd:
-          op_str = "&&";
-          break;
-        case Expr::kOr:
-          op_str = "||";
-          break;
-        default:
-          UNREACHABLE();
-      }
+    indent();
+    llvm::errs() << "Kernel { ident: " << k->ident << " } " << loc(k) << "\n";
+    dump(k->body.get());
+  }
 
-      std::cout << "Binary " << op_str << " {\n";
-      dump(b->lhs);
-      dump(b->rhs);
-      indent.indent();
-      std::cout << "}\n";
-    } else if (Access::classof(e)) {
-      auto a = static_cast<Access*>(e);
-      if (a->index.size() == 0) {
-        std::cout << "Access " << a->ident << "\n";
-      } else {
-        std::string index_str = std::to_string(a->index[0]);
-        for (size_t i = 1; i < a->index.size(); ++i) {
-          index_str += ", " + std::to_string(a->index[i]);
-        }
-        std::cout << "Access " << a->ident << " at [" << index_str << "]\n";
-      }
-    } else if (FloatLit::classof(e)) {
-      auto f = static_cast<FloatLit*>(e);
-      std::cout << "FloatLit " << f->val << "\n";
-    } else if (Const::classof(e)) {
-      auto c = static_cast<Const*>(e);
-      std::cout << "Const " << c->ident << "\n";
-    } else {
+  void dump(Stmt *s) {
+    llvm::TypeSwitch<Stmt *>(s).Case<Assign, If, Block>([&](auto *node) { this->dump(node); }).Default([&](Stmt *) {
       UNREACHABLE();
+    });
+  }
+
+  void dump(Assign *a) {
+    Indent indent(cur_level);
+    indent();
+    llvm::errs() << "Assign { ident: " << a->ident << ", index: " << vec_str(a->index) << " } " << loc(a) << "\n";
+    dump(a->rhs.get());
+  }
+  void dump(If *i) {
+    Indent indent(cur_level);
+    indent();
+    llvm::errs() << "If { cond + true_path" << (i->on_false == nullptr ? "" : " + false_path") << " } " << loc(i)
+                 << "\n";
+    dump(i->cond.get());
+    dump(i->on_true.get());
+    if (i->on_false) dump(i->on_false.get());
+  }
+  void dump(Block *b) {
+    Indent indent(cur_level);
+    indent();
+    llvm::errs() << "Block " << loc(b) << "\n";
+    for (auto &s : b->stmts) {
+      dump(s.get());
     }
   }
+
+  void dump(Expr *e) {
+    llvm::TypeSwitch<Expr *>(e)
+        .Case<Binary, Access, Const, FloatLit>([&](auto *node) { this->dump(node); })
+        .Default([&](Expr *) { UNREACHABLE(); });
+  }
+
+  void dump(Binary *b) {
+    Indent indent(cur_level);
+    std::string kind_str = "unknown";
+    switch (b->kind) {
+      case Expr::kAdd:
+        kind_str = "+";
+        break;
+      case Expr::kSub:
+        kind_str = "-";
+        break;
+      case Expr::kMul:
+        kind_str = "*";
+        break;
+      case Expr::kDiv:
+        kind_str = "/";
+        break;
+      case Expr::kMod:
+        kind_str = "%";
+        break;
+      case Expr::kLt:
+        kind_str = "<";
+        break;
+      case Expr::kLe:
+        kind_str = "<=";
+        break;
+      case Expr::kGe:
+        kind_str = ">=";
+        break;
+      case Expr::kGt:
+        kind_str = ">";
+        break;
+      case Expr::kEq:
+        kind_str = "==";
+        break;
+      case Expr::kNe:
+        kind_str = "!=";
+        break;
+      case Expr::kAnd:
+        kind_str = "&&";
+        break;
+      case Expr::kOr:
+        kind_str = "||";
+        break;
+      default:
+        UNREACHABLE();
+    }
+    indent();
+    llvm::errs() << "Binary { kind: " << kind_str << " } " << loc(b) << "\n";
+    dump(b->lhs.get());
+    dump(b->rhs.get());
+  }
+
+  void dump(Access *a) {
+    Indent indent(cur_level);
+    indent();
+    llvm::errs() << "Access { ident: " << a->ident << ", index: " << vec_str(a->index) << " } " << loc(a) << "\n";
+  }
+
+  void dump(Const *c) {
+    Indent indent(cur_level);
+    indent();
+    llvm::errs() << "Const { ident: " << c->ident << " } " << loc(c) << "\n";
+  }
+
+  void dump(FloatLit *f) {
+    Indent indent(cur_level);
+    indent();
+    llvm::errs() << "FloatLit { val: " << f->val << " } " << loc(f) << "\n";
+  }
+
+  int cur_level;
 };
 
 }  // namespace
 
-void Module::dump() {
-  std::cout << "Module:"
-            << "\n";
-  ASTdumper dumper;
-  for (size_t i = 0; i < decls.size(); ++i) dumper.dump(decls[i]);
-  for (size_t i = 0; i < kernels.size(); ++i) dumper.dump(kernels[i]);
-}
+void dump(Module *m) { Dumper().dump(m); }
+
+}  // namespace puzzle::ast

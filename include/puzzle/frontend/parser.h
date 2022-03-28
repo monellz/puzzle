@@ -14,8 +14,11 @@ using u8 = uint8_t;
 using u16 = uint16_t;
 using u32 = uint32_t;
 
+// using namespace puzzle::ast;
+namespace puzzle::ast {
+
 struct Token {
-  enum Kind {
+  enum Kind : u32 {
     _Eps,
     _Eof,
     _Err,
@@ -36,14 +39,15 @@ struct Token {
     RPar,
     Empty,
     Else,
-    Void,
-    Int,
+    In,
+    Out,
+    Grid,
     Const,
-    While,
+    Pad,
+    UpperBound,
+    LowerBound,
     If,
-    Return,
-    Break,
-    Continue,
+    Stencil,
     Assign,
     Comma,
     Semi,
@@ -53,24 +57,33 @@ struct Token {
     RBrk,
     LBrc,
     RBrc,
-    IntConst,
-    Ident,
+    IntLit,
+    FloatLit,
+    Ident
   } kind;
   std::string_view piece;
   u32 line, col;
 };
 
+using u8 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+
+struct Token;
+
 struct Lexer {
   std::string_view string;
+  std::string_view fn;
   u32 line, col;
 
-  explicit Lexer(std::string_view string) : string(string), line(1), col(1) {}
-
+  explicit Lexer(std::string_view string, std::string_view fn = "") : string(string), fn(fn), line(1), col(1) {}
   Token next();
 };
 
 struct Parser {
-  std::variant<Module, Token> parse(Lexer &lexer);
+  std::variant<std::unique_ptr<Module>, Token> parse(Lexer& lexer);
 };
+
+}  // namespace puzzle::ast
 
 #endif

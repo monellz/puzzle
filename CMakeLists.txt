@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.13.4)
-project(puzzle LANGUAGES CXX)
+project(puzzle LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -pedantic -g -Wall -Wno-missing-braces")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -fsanitize=address -static-libasan")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -fsanitize=leak -static-libasan")
 
 # For MLIR/LLVM
 find_package(MLIR REQUIRED CONFIG)
@@ -24,6 +24,10 @@ add_definitions(${LLVM_DEFINITIONS})
 # llvm support
 llvm_map_components_to_libnames(llvm_libs support)
 
+# mlir libs
+get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+message(STATUS "dialect_libs: ${dialect_libs}")
+
 # 3rdparty
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
 
@@ -34,8 +38,12 @@ add_executable(puzzle
 
   src/frontend/ast.cpp
   src/frontend/parser.cpp
+
+  #src/mlir/dialect.cpp
+  #src/mlir/mlir_gen.cpp
 )
 
 target_link_libraries(puzzle
   ${llvm_libs}
+  #${dialect_libs}
 )

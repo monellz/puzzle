@@ -8,4 +8,5 @@ MLIR_DIR=/home/zhongrunxin/workspace/mlir/llvm-project/build/lib/cmake/mlir
 mkdir ${PROJECT_DIR}/build
 rm -rf ${PROJECT_DIR}/build/*
 cd ${PROJECT_DIR}/build
-cmake .. -DMLIR_DIR=${MLIR_DIR}
+cmake .. -DMLIR_DIR=${MLIR_DIR} -DCMAKE_BUILD_TYPE=Debug
+#cmake .. -DMLIR_DIR=${MLIR_DIR} -DCMAKE_BUILD_TYPE=Release

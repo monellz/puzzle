@@ -6,18 +6,31 @@
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "puzzle/frontend/parser.h"
+//#include "puzzle/mlir/dialect.h"
+//#include "puzzle/mlir/mlir_gen.h"
 #include "puzzle/util/err.h"
 
 namespace cl = llvm::cl;
+using namespace puzzle;
 
 static cl::opt<std::string> input_fn(cl::Positional, cl::desc("<input puzzle file>"), cl::init("-"),
                                      cl::value_desc("filename"));
 namespace {
-enum Action { None, DumpAST };
+enum Action { None, DumpAST, DumpMLIR };
 }
 
 static cl::opt<enum Action> emit_action("emit", cl::desc("Select the kind of output desired"),
-                                        cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")));
+                                        cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")),
+                                        cl::values(clEnumValN(DumpMLIR, "mlir", "output the MLIR dump")));
+
+/*
+void dump_mlir(Module *m) {
+  mlir::MLIRContext context;
+  context.getOrLoadDialect<puzzle::PuzzleDialect>();
+  auto module_ref = puzzle::MLIRGen::dump(m, context);
+  dbg(module_ref.get());
+}
+*/
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "puzzle!");
@@ -28,13 +41,25 @@ int main(int argc, char **argv) {
   }
 
   auto buffer_ref = file_or_err.get()->getBuffer();
-  Lexer lex(std::string_view(buffer_ref.begin(), buffer_ref.size()));
-  auto result = Parser().parse(lex);
+  ast::Lexer lex(std::string_view(buffer_ref.begin(), buffer_ref.size()), input_fn);
+  auto result = ast::Parser().parse(lex);
   if (result.index() == 1) {
-    Token *t = std::get_if<1>(&result);
+    ast::Token *t = std::get_if<1>(&result);
     ERR_EXIT(PARSING_ERROR, "parsing error", t->kind, t->line, t->col, t->piece);
   }
-  Module *p = std::get_if<0>(&result);
-  p->dump();
+  auto m = std::move(std::get<0>(result));
+  switch (emit_action) {
+    case DumpAST: {
+      ast::dump(m.get());
+      break;
+    }
+    case DumpMLIR: {
+      dbg("unimpl dumpmlir");
+      break;
+    }
+    default: {
+      dbg("unknown action", emit_action);
+    }
+  }
   return 0;
 }
