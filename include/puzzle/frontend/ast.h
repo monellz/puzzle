@@ -10,7 +10,7 @@ namespace puzzle::ast {
 
 #define DEF_CLASSOF(base_type, cond) \
   static bool classof(const base_type* p) { return cond; }
-#define DEF_LOC_UPDATE()            \
+#define DEF_UPDATE_LOC()            \
   template <typename T>             \
   void update_loc(const T& lexer) { \
     this->loc.fn = lexer.fn;        \
@@ -29,7 +29,7 @@ struct Expr {
   explicit Expr(Kind kind) : kind(kind) {}
   virtual ~Expr() {}
   Location loc;
-  DEF_LOC_UPDATE()
+  DEF_UPDATE_LOC()
 };
 
 struct Binary : Expr {
@@ -73,7 +73,7 @@ struct Stmt {
   explicit Stmt(Kind kind) : kind(kind) {}
   virtual ~Stmt() {}
   Location loc;
-  DEF_LOC_UPDATE()
+  DEF_UPDATE_LOC()
 };
 
 struct Assign : public Stmt {
@@ -111,7 +111,7 @@ struct Decl {
   double init;
   Decl(Kind kind, std::string_view ident, int rank, double init) : kind(kind), ident(ident), rank(rank), init(init) {}
   Location loc;
-  DEF_LOC_UPDATE()
+  DEF_UPDATE_LOC()
 };
 
 struct Kernel {
@@ -119,7 +119,7 @@ struct Kernel {
   std::unique_ptr<Block> body;
   Kernel(std::string_view ident, std::unique_ptr<Block> body) : ident(ident), body(std::move(body)) {}
   Location loc;
-  DEF_LOC_UPDATE()
+  DEF_UPDATE_LOC()
 };
 
 struct Info {
@@ -129,7 +129,7 @@ struct Info {
   std::vector<int> hint;
   Info(Kind kind, std::string_view ident, std::vector<int> hint) : kind(kind), ident(ident), hint(std::move(hint)) {}
   Location loc;
-  DEF_LOC_UPDATE()
+  DEF_UPDATE_LOC()
 };
 
 struct Module {
@@ -137,7 +137,7 @@ struct Module {
   std::vector<std::unique_ptr<Info>> infos;
   std::vector<std::unique_ptr<Kernel>> kernels;
   Location loc;
-  DEF_LOC_UPDATE()
+  DEF_UPDATE_LOC()
 };
 
 // 一些用在parser act的函数
