@@ -5,9 +5,10 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "mlir/IR/MLIRContext.h"
 #include "puzzle/frontend/parser.h"
-//#include "puzzle/mlir/dialect.h"
-//#include "puzzle/mlir/mlir_gen.h"
+#include "puzzle/mlir/dialect.h"
+#include "puzzle/mlir/mlir_gen.h"
 #include "puzzle/util/err.h"
 
 namespace cl = llvm::cl;
@@ -23,14 +24,12 @@ static cl::opt<enum Action> emit_action("emit", cl::desc("Select the kind of out
                                         cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")),
                                         cl::values(clEnumValN(DumpMLIR, "mlir", "output the MLIR dump")));
 
-/*
-void dump_mlir(Module *m) {
+void dump_mlir(ast::Module *m) {
   mlir::MLIRContext context;
-  context.getOrLoadDialect<puzzle::PuzzleDialect>();
-  auto module_ref = puzzle::MLIRGen::dump(m, context);
+  context.getOrLoadDialect<PuzzleDialect>();
+  auto module_ref = MLIRGen::dump(m, context);
   dbg(module_ref.get());
 }
-*/
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "puzzle!");
@@ -54,7 +53,7 @@ int main(int argc, char **argv) {
       break;
     }
     case DumpMLIR: {
-      dbg("unimpl dumpmlir");
+      dump_mlir(m.get());
       break;
     }
     default: {
