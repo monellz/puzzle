@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "puzzle/frontend/ast.h"
-namespace puzzle::ast {
+namespace mlir::puzzle::ast {
 using u8 = uint8_t;
 using u16 = uint16_t;
 using u32 = uint32_t;
@@ -1707,4 +1707,4 @@ std::variant<std::unique_ptr<Module>, Token> Parser::parse(Lexer &lexer) {
   }
 }
 
-}  // namespace puzzle::ast
+}  // namespace mlir::puzzle::ast

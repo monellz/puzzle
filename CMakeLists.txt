@@ -40,11 +40,19 @@ add_executable(puzzle
   src/frontend/ast.cpp
   src/frontend/parser.cpp
 
-  #src/mlir/dialect.cpp
+  src/mlir/dialect.cpp
+  src/mlir/puzzle_types.cpp
   #src/mlir/mlir_gen.cpp
 )
 
 target_link_libraries(puzzle
   ${llvm_libs}
-  #${dialect_libs}
+  ${dialect_libs}
+
+  MLIRAnalysis
+  MLIRIR
+  MLIRParser
+  MLIRSideEffectInterfaces
+  MLIRTransforms
+  MLIRSupport
 )

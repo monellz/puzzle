@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-namespace puzzle::ast {
+namespace mlir::puzzle::ast {
 
 #define DEF_CLASSOF(base_type, cond) \
   static bool classof(const base_type* p) { return cond; }
@@ -147,6 +147,6 @@ inline double to_double(std::string_view sv) { return strtod(sv.data(), nullptr)
 // dump
 void dump(Module* m);
 
-}  // namespace puzzle::ast
+}  // namespace mlir::puzzle::ast
 
 #endif

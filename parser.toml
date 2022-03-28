@@ -1,5 +1,5 @@
 include = '''#include "puzzle/frontend/ast.h"
-namespace puzzle::ast {'''
+namespace mlir::puzzle::ast {'''
 epilogue = '''}'''
 
 priority = [

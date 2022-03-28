@@ -11,7 +11,7 @@
 #include "puzzle/util/err.h"
 
 namespace cl = llvm::cl;
-using namespace puzzle;
+using namespace mlir::puzzle;
 
 static cl::opt<std::string> input_fn(cl::Positional, cl::desc("<input puzzle file>"), cl::init("-"),
                                      cl::value_desc("filename"));

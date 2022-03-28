@@ -6,7 +6,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "puzzle/util/err.h"
 
-namespace puzzle::ast {
+namespace mlir::puzzle::ast {
 
 namespace {
 
@@ -231,4 +231,4 @@ class Dumper {
 
 void dump(Module *m) { Dumper().dump(m); }
 
-}  // namespace puzzle::ast
+}  // namespace mlir::puzzle::ast

@@ -14,8 +14,7 @@ using u8 = uint8_t;
 using u16 = uint16_t;
 using u32 = uint32_t;
 
-// using namespace puzzle::ast;
-namespace puzzle::ast {
+namespace mlir::puzzle::ast {
 
 struct Token {
   enum Kind : u32 {
@@ -84,6 +83,6 @@ struct Parser {
   std::variant<std::unique_ptr<Module>, Token> parse(Lexer& lexer);
 };
 
-}  // namespace puzzle::ast
+}  // namespace mlir::puzzle::ast
 
 #endif
