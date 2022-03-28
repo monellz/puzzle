@@ -3,26 +3,13 @@
 ## 进度
 
 - [x] stencil DSL定义
-- [ ] 前端: stencil -> AST
+- [x] 前端: stencil -> AST
   - [x] 打印AST
+- [ ] IR: AST -> MLIR
+  - [ ] MLIR Dialect/Op定义
+  - [ ] 打印MLIR
 
 ## DSL定义
-
-### 例子
-
-```c++
-In<3> input;
-Out<3> output;
-Const lap_factor = -4.0;
-
-Pad input(4, 4, 4), output(4, 4, 4);
-UpperBound input(64, 64, 64), output(64, 64, 64);
-// LowerBound input(0, 0, 0), output(0, 0, 0);
-
-laplace = stencil {
-  output[0, 0, 0] = lap_factor * input[0, 0, 0] + input[-1, 0, 0] + input[1, 0, 0] + input[0, 1, 0] + input[0, -1, 0];
-};
-```
 
 ### ENBF
 
@@ -30,10 +17,10 @@ laplace = stencil {
 // eps代表空
 Module -> Module VarDecl | Module InfoDecl | Module KernelDecl | eps
 
-VarDecl -> 'in' '<' IntLiteral '>' DeclList ';'
-        -> 'out' '<' IntLiteral '>' DeclList ';'
-        -> 'grid' '<' IntLiteral '>' DeclList ';'
-        -> 'const' DeclList ';'
+VarDecl -> 'In' '<' IntLiteral '>' DeclList ';'
+        -> 'Out' '<' IntLiteral '>' DeclList ';'
+        -> 'Grid' '<' IntLiteral '>' DeclList ';'
+        -> 'Const' DeclList ';'
 DeclList  -> DeclList1
 DeclList1 -> DeclList1 ',' Decl | Decl
 Decl -> Identifier '=' FloatLiteral | Identifier
@@ -79,7 +66,25 @@ IntLiteral   -> [-+]?\d+|(0x[0-9a-fA-F]+)
 FloatLiteral -> [-+]?\d+[.]\d*([eE][-+]?\d+)?
 ```
 
-## AST
+## 例子
+
+### DSL输入
+
+```c++
+In<3> input;
+Out<3> output;
+Const lap_factor = -4.0;
+
+Pad input(4, 4, 4), output(4, 4, 4);
+UpperBound input(64, 64, 64), output(64, 64, 64);
+// LowerBound input(0, 0, 0), output(0, 0, 0);
+
+laplace = stencil {
+  output[0, 0, 0] = lap_factor * input[0, 0, 0] + input[-1, 0, 0] + input[1, 0, 0] + input[0, 1, 0] + input[0, -1, 0];
+};
+```
+
+### AST
 
 ```
 Module @../example/simple.pz:17:1
