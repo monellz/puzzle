@@ -1,0 +1,14 @@
+lap_factor = 4.0;
+
+// phi -> lap
+laplacian_stencil = stencil {
+  lap[0, 0] = phi[1, 0] + phi[-1, 0] + phi[0, 1] + phi[0, -1] - lap_factor * phi[0, 0];
+};
+
+laplacian = kernel {
+  In: phi;
+  Out: lap;
+  Pad: 1;
+  Iter: 1;
+  Bound: [0, 0, 0] -> [64, 64, 64];
+};

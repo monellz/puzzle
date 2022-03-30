@@ -5,4 +5,4 @@ PROJECT_DIR=$(dirname "${SCRIPT_DIR}")
 
 GENERATOR=/home/zhongrunxin/workspace/mlir/lalr1/target/debug/parser_gen
 
-${GENERATOR} ${SCRIPT_DIR}/../parser.toml -o ${SCRIPT_DIR}/../src/frontend/parser.cpp -l cpp
+${GENERATOR} ${PROJECT_DIR}/puzzle-translate/parser.toml -o ${PROJECT_DIR}/puzzle-translate/dsl/parser.cpp -l cpp

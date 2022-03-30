@@ -1,5 +1,5 @@
-include = '''#include "puzzle/frontend/ast.h"
-namespace mlir::puzzle::ast {'''
+include = '''#include "puzzle-translate/dsl/ast.h"
+namespace mlir::puzzle::dsl {'''
 epilogue = '''}'''
 
 priority = [
@@ -20,14 +20,14 @@ start = 'Module'
 [lexical]
 'In' = 'In'
 'Out' = 'Out'
-'Grid' = 'Grid'
-'Const' = 'Const'
 'Pad' = 'Pad'
-'UpperBound' = 'UpperBound'
-'LowerBound' = 'LowerBound'
+'Bound' = 'Bound'
+'Iter' = 'Iter'
+'stencil' = 'Stencil'
+'kernel' = 'Kernel'
+'->' = 'RArrow'
 'if' = 'If'
 'else' = 'Else'
-'stencil' = 'Stencil'
 '\+' = 'Add'
 '-' = 'Sub'
 '\*' = 'Mul'
@@ -43,6 +43,7 @@ start = 'Module'
 '\|\|' = 'Or'
 '=' = 'Assign'
 ',' = 'Comma'
+':' = 'Colon'
 ';' = 'Semi' # short for semicolon
 '!' = 'Not'
 '\(' = 'LPar' # short for parenthesis
@@ -63,78 +64,50 @@ start = 'Module'
 lhs = 'Module'
 ty = 'std::unique_ptr<Module>'
 rhs = [
-  { rhs = ['Module', 'VarDecl'], act = 'for (auto &d : _2) { _1->decls.push_back(std::move(d)); } _1->update_loc(lexer); __ = std::move(_1);' },
-  { rhs = ['Module', 'InfoDecl'], act = 'for (auto &i : _2) { _1->infos.push_back(std::move(i)); } _1->update_loc(lexer); __ = std::move(_1);' },
-  { rhs = ['Module', 'KernelDecl'], act = '_1->kernels.push_back(std::move(_2)); _1->update_loc(lexer); __ = std::move(_1);' },
+  { rhs = ['Module', 'ConstDecl'], act = '_1->decls.push_back(std::move(_2)); _1->update_loc(lexer); __ = std::move(_1);' },
+  { rhs = ['Module', 'StencilDecl'], act = '_1->decls.push_back(std::move(_2)); _1->update_loc(lexer); __ = std::move(_1);' },
+  { rhs = ['Module', 'KernelDecl'], act = '_1->decls.push_back(std::move(_2)); _1->update_loc(lexer); __ = std::move(_1);' },
   { rhs = [], act = 'auto __m = std::make_unique<Module>(); __m->update_loc(lexer); __ = std::move(__m);' },
 ]
 
 [[production]]
-lhs = 'VarDecl'
-ty = 'std::vector<std::unique_ptr<Decl>>'
+lhs = 'ConstDecl'
+ty = 'std::unique_ptr<Decl>'
 rhs = [
-  { rhs = ['In', 'Lt', 'IntLit', 'Gt', 'DeclList', 'Semi'], act = 'int _r = to_dec(_3.piece); for (auto &d : _5) { d->kind = Decl::kIn; d->rank = _r;} __ = std::move(_5);'},
-  { rhs = ['Out', 'Lt', 'IntLit', 'Gt', 'DeclList', 'Semi'], act = 'int _r = to_dec(_3.piece); for (auto &d : _5) { d->kind = Decl::kOut; d->rank = _r;} __ = std::move(_5);'},
-  { rhs = ['Grid', 'Lt', 'IntLit', 'Gt', 'DeclList', 'Semi'], act = 'int _r = to_dec(_3.piece); for (auto &d : _5) { d->kind = Decl::kGrid; d->rank = _r;} __ = std::move(_5);'},
-  { rhs = ['Const', 'DeclList', 'Semi'], act = 'for (auto &d : _2) { d->kind = Decl::kConst;} __ = std::move(_2);'},
+  { rhs = ['Ident', 'Assign', 'FloatLit', 'Semi'], act = '__ = std::make_unique<Const>(_1.piece, to_double(_3.piece));'},
 ]
 
 [[production]]
-lhs = 'InfoDecl'
-ty = 'std::vector<std::unique_ptr<Info>>'
+lhs = 'StencilDecl'
+ty = 'std::unique_ptr<Decl>'
 rhs = [
-  { rhs = ['UpperBound', 'InfoList', 'Semi'], act = 'for (auto &i : _2) { i->kind = Info::kUpperBound;} __ = std::move(_2);'},
-  { rhs = ['LowerBound', 'InfoList', 'Semi'], act = 'for (auto &i : _2) { i->kind = Info::kLowerBound;} __ = std::move(_2);'},
-  { rhs = ['Pad', 'InfoList', 'Semi'], act = 'for (auto &i : _2) { i->kind = Info::kPad;} __ = std::move(_2);'},
+  { rhs = ['Ident', 'Assign', 'Stencil', 'Block', 'Semi'], act = '__ = std::make_unique<Stencil>(_1.piece, std::move(_4));'},
+]
+
+[[production]]
+lhs = 'KernelDecl'
+ty = 'std::unique_ptr<Decl>'
+rhs = [
+  { rhs = ['Ident', 'Assign', 'Kernel', 'LBrc', 'InfoList', 'RBrc', 'Semi'], act = '__ = std::make_unique<Kernel>(_1.piece, std::move(_5));'},
 ]
 
 [[production]]
 lhs = 'InfoList'
 ty = 'std::vector<std::unique_ptr<Info>>'
 rhs = [
-  { rhs = ['InfoList1'], act = '__ = std::move(_1);' },
+  { rhs = ['InfoList', 'Info'], act = '_1.push_back(std::move(_2)); __ = std::move(_1);' },
   { rhs = [], act = '__ = std::move(std::vector<std::unique_ptr<Info>>());' },
 ]
 
 [[production]]
-lhs = 'InfoList1'
-ty = 'std::vector<std::unique_ptr<Info>>'
+lhs = 'Info'
+ty = 'std::unique_ptr<Info>'
 rhs = [
-  { rhs = ['InfoList1', 'Comma', 'Ident', 'LPar', 'Index', 'RPar'], act = '_1.emplace_back(std::make_unique<Info>(Info::kUnknown, _3.piece, std::move(_5))); _1.back()->update_loc(lexer); __ = std::move(_1);'},
-  { rhs = ['Ident', 'LPar', 'Index', 'RPar'], act = 'auto __v = std::vector<std::unique_ptr<Info>>(); __v.emplace_back(std::make_unique<Info>(Info::kUnknown, _1.piece, std::move(_3))); __v[0]->update_loc(lexer); __ = std::move(__v);'},
-]
-
-
-[[production]]
-lhs = 'DeclList'
-ty = 'std::vector<std::unique_ptr<Decl>>'
-rhs = [
-  { rhs = ['DeclList1'], act = '__ = std::move(_1);' },
-  { rhs = [], act = '__ = std::move(std::vector<std::unique_ptr<Decl>>());' },
-]
-
-[[production]]
-lhs = 'DeclList1'
-ty = 'std::vector<std::unique_ptr<Decl>>'
-rhs = [
-  { rhs = ['DeclList1', 'Comma', 'Decl'], act = '_1.push_back(std::move(_3)); __ = std::move(_1);'},
-  { rhs = ['Decl'], act = 'auto __v = std::vector<std::unique_ptr<Decl>>(); __v.push_back(std::move(_1)); __ = std::move(__v);'},
-]
-
-[[production]]
-lhs = 'Decl'
-ty = 'std::unique_ptr<Decl>'
-rhs = [
-  { rhs = ['Ident', 'Assign', 'FloatLit'], act = 'double _f = to_double(_3.piece); auto __d = std::make_unique<Decl>(Decl::kConst, _1.piece, 0, _f); __d->update_loc(lexer); __ = std::move(__d);'},
-  { rhs = ['Ident', 'Assign', 'IntLit'], act = 'double _f = to_double(_3.piece); auto __d = std::make_unique<Decl>(Decl::kConst, _1.piece, 0, _f); __d->update_loc(lexer); __ = std::move(__d);'},
-  { rhs = ['Ident'], act = 'auto __d = std::make_unique<Decl>(Decl::kUnknown, _1.piece, 0, 0.0); __d->update_loc(lexer); __ = std::move(__d);'},
-]
-
-[[production]]
-lhs = 'KernelDecl'
-ty = 'std::unique_ptr<Kernel>'
-rhs = [
-  { rhs = ['Ident', 'Assign', 'Stencil', 'Block', 'Semi'], act = 'auto __k = std::make_unique<Kernel>(_1.piece, std::move(_4)); __k->update_loc(lexer); __ = std::move(__k);'},
+  { rhs = ['In', 'Colon', 'Ident', 'Semi'], act = 'auto __i = std::make_unique<In>(_3.piece); __i->update_loc(lexer); __ = std::move(__i);'},
+  { rhs = ['Out', 'Colon', 'Ident', 'Semi'], act = 'auto __i = std::make_unique<Out>(_3.piece); __i->update_loc(lexer); __ = std::move(__i);'},
+  { rhs = ['Pad', 'Colon', 'IntLit', 'Semi'], act = 'auto __i = std::make_unique<Pad>(to_dec(_3.piece)); __i->update_loc(lexer); __ = std::move(__i);'},
+  { rhs = ['Iter', 'Colon', 'IntLit', 'Semi'], act = 'auto __i = std::make_unique<Iter>(to_dec(_3.piece)); __i->update_loc(lexer); __ = std::move(__i);'},
+  { rhs = ['Bound', 'Colon', 'LBrk', 'Index', 'RBrk', 'RArrow', 'LBrk', 'Index', 'RBrk', 'Semi'], act = 'auto __i = std::make_unique<Bound>(std::move(_4), std::move(_8)); __i->update_loc(lexer); __ = std::move(__i);'},
 ]
 
 [[production]]
@@ -172,18 +145,18 @@ rhs = [
 
 [[production]]
 lhs = 'Index'
-ty = 'std::vector<int>'
+ty = 'std::vector<int64_t>'
 rhs = [
   { rhs = ['Index1'], act = '__ = std::move(_1);'},
-  { rhs = [], act = '__ = std::vector<int>();'},
+  { rhs = [], act = '__ = std::vector<int64_t>();'},
 ]
 
 [[production]]
 lhs = 'Index1'
-ty = 'std::vector<int>'
+ty = 'std::vector<int64_t>'
 rhs = [
   { rhs = ['Index1', 'Comma', 'IntLit'], act = '_1.push_back(to_dec(_3.piece)); __ = std::move(_1);'},
-  { rhs = ['IntLit'], act = '__ = std::vector<int>({to_dec(_1.piece)});'},
+  { rhs = ['IntLit'], act = '__ = std::vector<int64_t>({to_dec(_1.piece)});'},
 ]
 
 
@@ -210,7 +183,7 @@ rhs = [
   { rhs = ['Not', 'Expr'], act = 'auto __e = std::make_unique<Binary>(Expr::kEq, FloatLit::ZERO(), std::move(_2)); __e->update_loc(lexer); __ = std::move(__e);', prec = 'Unary' },
   { rhs = ['LPar', 'Expr', 'RPar'], act = '_2->update_loc(lexer); __ = std::move(_2);' },
   { rhs = ['Ident', 'LBrk', 'Index', 'RBrk'], act = 'auto __e = std::make_unique<Access>(_1.piece, std::move(_3)); __e->update_loc(lexer); __ = std::move(__e);' },
-  { rhs = ['Ident'], act = 'auto __e = std::make_unique<Const>(_1.piece); __e->update_loc(lexer); __ = std::move(__e);' },
+  { rhs = ['Ident'], act = 'auto __e = std::make_unique<Access>(_1.piece); __e->update_loc(lexer); __ = std::move(__e);' },
   { rhs = ['FloatLit'], act = 'double _f = to_double(_1.piece); auto __e = std::make_unique<FloatLit>(_f); __e->update_loc(lexer); __ = std::move(__e);'},
   { rhs = ['IntLit'], act = 'double _f = to_double(_1.piece); auto __e = std::make_unique<FloatLit>(_f); __e->update_loc(lexer); __ = std::move(__e);'},
 ]

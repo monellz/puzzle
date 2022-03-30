@@ -37,7 +37,7 @@ License (MIT):
 
 #ifndef DBG_MACRO_NO_WARNING
 #pragma message("WARNING: the 'dbg.h' header is included in your code base")
-#endif  // DBG_MACRO_NO_WARNING
+#endif // DBG_MACRO_NO_WARNING
 
 #include <algorithm>
 #include <chrono>
@@ -100,7 +100,7 @@ static constexpr size_t SUFFIX_LENGTH = sizeof(">(void)") - 1;
 #error "This compiler is currently not supported by dbg_macro."
 #endif
 
-}  // namespace pretty_function
+} // namespace pretty_function
 
 // Formatting helpers
 
@@ -112,16 +112,16 @@ struct print_formatted {
 
   operator T() const { return inner; }
 
-  const char* prefix() const {
+  const char *prefix() const {
     switch (base) {
-      case 8:
-        return "0o";
-      case 16:
-        return "0x";
-      case 2:
-        return "0b";
-      default:
-        return "";
+    case 8:
+      return "0o";
+    case 16:
+      return "0x";
+    case 2:
+      return "0b";
+    default:
+      return "";
     }
   }
 
@@ -147,14 +147,14 @@ print_formatted<T> bin(T value) {
 // Implementation of 'type_name<T>()'
 
 template <typename T>
-const char* type_name_impl() {
+const char *type_name_impl() {
   return DBG_MACRO_PRETTY_FUNCTION;
 }
 
 template <typename T>
 struct type_tag {};
 
-template <int&... ExplicitArgumentBarrier, typename T>
+template <int &...ExplicitArgumentBarrier, typename T>
 std::string get_type_name(type_tag<T>) {
   namespace pf = pretty_function;
 
@@ -244,8 +244,8 @@ namespace detail_detector {
 struct nonesuch {
   nonesuch() = delete;
   ~nonesuch() = delete;
-  nonesuch(nonesuch const&) = delete;
-  void operator=(nonesuch const&) = delete;
+  nonesuch(nonesuch const &) = delete;
+  void operator=(nonesuch const &) = delete;
 };
 
 template <typename...>
@@ -263,7 +263,7 @@ struct detector<Default, void_t<Op<Args...>>, Op, Args...> {
   using type = Op<Args...>;
 };
 
-}  // namespace detail_detector
+} // namespace detail_detector
 
 template <template <class...> class Op, class... Args>
 using is_detected = typename detail_detector::detector<detail_detector::nonesuch, void, Op, Args...>::value_t;
@@ -275,7 +275,7 @@ using std::begin;
 using std::end;
 #if DBG_MACRO_CXX_STANDARD < 17
 template <typename T>
-constexpr auto size(const T& c) -> decltype(c.size()) {
+constexpr auto size(const T &c) -> decltype(c.size()) {
   return c.size();
 }
 template <typename T, std::size_t N>
@@ -285,7 +285,7 @@ constexpr std::size_t size(const T (&)[N]) {
 #else
 using std::size;
 #endif
-}  // namespace
+} // namespace
 
 template <typename T>
 using detect_begin_t = decltype(detail::begin(std::declval<T>()));
@@ -305,12 +305,12 @@ struct is_container {
 };
 
 template <typename T>
-using ostream_operator_t = decltype(std::declval<std::ostream&>() << std::declval<T>());
+using ostream_operator_t = decltype(std::declval<std::ostream &>() << std::declval<T>());
 
 template <typename T>
 struct has_ostream_operator : is_detected<ostream_operator_t, T> {};
 
-}  // namespace detail
+} // namespace detail
 
 // Helper to dbg(…)-print types
 template <typename T>
@@ -324,103 +324,103 @@ print_type<T> type() {
 // Forward declarations of "pretty_print"
 
 template <typename T>
-inline void pretty_print(std::ostream& stream, const T& value, std::true_type);
+inline void pretty_print(std::ostream &stream, const T &value, std::true_type);
 
 template <typename T>
-inline void pretty_print(std::ostream&, const T&, std::false_type);
+inline void pretty_print(std::ostream &, const T &, std::false_type);
 
 template <typename T>
-inline typename std::enable_if<!detail::is_container<const T&>::value && !std::is_enum<T>::value, bool>::type
-pretty_print(std::ostream& stream, const T& value);
+inline typename std::enable_if<!detail::is_container<const T &>::value && !std::is_enum<T>::value, bool>::type
+pretty_print(std::ostream &stream, const T &value);
 
-inline bool pretty_print(std::ostream& stream, const bool& value);
+inline bool pretty_print(std::ostream &stream, const bool &value);
 
-inline bool pretty_print(std::ostream& stream, const char& value);
+inline bool pretty_print(std::ostream &stream, const char &value);
 
 template <typename P>
-inline bool pretty_print(std::ostream& stream, P* const& value);
+inline bool pretty_print(std::ostream &stream, P *const &value);
 
 template <typename T, typename Deleter>
-inline bool pretty_print(std::ostream& stream, std::unique_ptr<T, Deleter>& value);
+inline bool pretty_print(std::ostream &stream, std::unique_ptr<T, Deleter> &value);
 
 template <typename T>
-inline bool pretty_print(std::ostream& stream, std::shared_ptr<T>& value);
+inline bool pretty_print(std::ostream &stream, std::shared_ptr<T> &value);
 
 template <size_t N>
-inline bool pretty_print(std::ostream& stream, const char (&value)[N]);
+inline bool pretty_print(std::ostream &stream, const char (&value)[N]);
 
 template <>
-inline bool pretty_print(std::ostream& stream, const char* const& value);
+inline bool pretty_print(std::ostream &stream, const char *const &value);
 
 template <typename... Ts>
-inline bool pretty_print(std::ostream& stream, const std::tuple<Ts...>& value);
+inline bool pretty_print(std::ostream &stream, const std::tuple<Ts...> &value);
 
 template <>
-inline bool pretty_print(std::ostream& stream, const std::tuple<>&);
+inline bool pretty_print(std::ostream &stream, const std::tuple<> &);
 
 template <>
-inline bool pretty_print(std::ostream& stream, const time&);
+inline bool pretty_print(std::ostream &stream, const time &);
 
 template <typename T>
-inline bool pretty_print(std::ostream& stream, const print_formatted<T>& value);
+inline bool pretty_print(std::ostream &stream, const print_formatted<T> &value);
 
 template <typename T>
-inline bool pretty_print(std::ostream& stream, const print_type<T>&);
+inline bool pretty_print(std::ostream &stream, const print_type<T> &);
 
 template <typename Enum>
-inline typename std::enable_if<std::is_enum<Enum>::value, bool>::type pretty_print(std::ostream& stream,
-                                                                                   Enum const& value);
+inline typename std::enable_if<std::is_enum<Enum>::value, bool>::type pretty_print(std::ostream &stream,
+                                                                                   Enum const &value);
 
-inline bool pretty_print(std::ostream& stream, const std::string& value);
+inline bool pretty_print(std::ostream &stream, const std::string &value);
 
 #if DBG_MACRO_CXX_STANDARD >= 17
 
-inline bool pretty_print(std::ostream& stream, const std::string_view& value);
+inline bool pretty_print(std::ostream &stream, const std::string_view &value);
 
 #endif
 
 template <typename T1, typename T2>
-inline bool pretty_print(std::ostream& stream, const std::pair<T1, T2>& value);
+inline bool pretty_print(std::ostream &stream, const std::pair<T1, T2> &value);
 
 #if DBG_MACRO_CXX_STANDARD >= 17
 
 template <typename T>
-inline bool pretty_print(std::ostream& stream, const std::optional<T>& value);
+inline bool pretty_print(std::ostream &stream, const std::optional<T> &value);
 
 template <typename... Ts>
-inline bool pretty_print(std::ostream& stream, const std::variant<Ts...>& value);
+inline bool pretty_print(std::ostream &stream, const std::variant<Ts...> &value);
 
 #endif
 
 template <typename Container>
-inline typename std::enable_if<detail::is_container<const Container&>::value, bool>::type pretty_print(
-    std::ostream& stream, const Container& value);
+inline typename std::enable_if<detail::is_container<const Container &>::value, bool>::type
+pretty_print(std::ostream &stream, const Container &value);
 
 // Specializations of "pretty_print"
 
 template <typename T>
-inline void pretty_print(std::ostream& stream, const T& value, std::true_type) {
+inline void pretty_print(std::ostream &stream, const T &value, std::true_type) {
   stream << value;
 }
 
 template <typename T>
-inline void pretty_print(std::ostream&, const T&, std::false_type) {
-  static_assert(detail::has_ostream_operator<const T&>::value, "Type does not support the << ostream operator");
+inline void pretty_print(std::ostream &, const T &, std::false_type) {
+  static_assert(detail::has_ostream_operator<const T &>::value, "Type does not support the << ostream operator");
 }
 
 template <typename T>
-inline typename std::enable_if<!detail::is_container<const T&>::value && !std::is_enum<T>::value, bool>::type
-pretty_print(std::ostream& stream, const T& value) {
-  pretty_print(stream, value, typename detail::has_ostream_operator<const T&>::type{});
+inline typename std::enable_if<!detail::is_container<const T &>::value && !std::is_enum<T>::value, bool>::type
+pretty_print(std::ostream &stream, const T &value) {
+  pretty_print(stream, value, typename detail::has_ostream_operator<const T &>::type{});
   return true;
 }
 
-inline bool pretty_print(std::ostream& stream, const bool& value) {
+inline bool pretty_print(std::ostream &stream, const bool &value) {
   stream << std::boolalpha << value;
   return true;
 }
 
-inline bool pretty_print(std::ostream& stream, const char& value) {
+inline bool pretty_print(std::ostream &stream, const char &value) {
   const bool printable = value >= 0x20 && value <= 0x7E;
 
   if (printable) {
@@ -432,7 +432,7 @@ inline bool pretty_print(std::ostream& stream, const char& value) {
 }
 
 template <typename P>
-inline bool pretty_print(std::ostream& stream, P* const& value) {
+inline bool pretty_print(std::ostream &stream, P *const &value) {
   if (value == nullptr) {
     stream << "nullptr";
   } else {
@@ -442,13 +442,13 @@ inline bool pretty_print(std::ostream& stream, P* const& value) {
 }
 
 template <typename T, typename Deleter>
-inline bool pretty_print(std::ostream& stream, std::unique_ptr<T, Deleter>& value) {
+inline bool pretty_print(std::ostream &stream, std::unique_ptr<T, Deleter> &value) {
   pretty_print(stream, value.get());
   return true;
 }
 
 template <typename T>
-inline bool pretty_print(std::ostream& stream, std::shared_ptr<T>& value) {
+inline bool pretty_print(std::ostream &stream, std::shared_ptr<T> &value) {
   pretty_print(stream, value.get());
   stream << " (use_count = " << value.use_count() << ")";
 
@@ -456,13 +456,13 @@ inline bool pretty_print(std::ostream& stream, std::shared_ptr<T>& value) {
 }
 
 template <size_t N>
-inline bool pretty_print(std::ostream& stream, const char (&value)[N]) {
+inline bool pretty_print(std::ostream &stream, const char (&value)[N]) {
   stream << value;
   return false;
 }
 
 template <>
-inline bool pretty_print(std::ostream& stream, const char* const& value) {
+inline bool pretty_print(std::ostream &stream, const char *const &value) {
   stream << '"' << value << '"';
   return true;
 }
@@ -470,7 +470,7 @@ inline bool pretty_print(std::ostream& stream, const char* const& value) {
 template <size_t Idx>
 struct pretty_print_tuple {
   template <typename... Ts>
-  static void print(std::ostream& stream, const std::tuple<Ts...>& tuple) {
+  static void print(std::ostream &stream, const std::tuple<Ts...> &tuple) {
     pretty_print_tuple<Idx - 1>::print(stream, tuple);
     stream << ", ";
     pretty_print(stream, std::get<Idx>(tuple));
@@ -480,13 +480,13 @@ struct pretty_print_tuple {
 template <>
 struct pretty_print_tuple<0> {
   template <typename... Ts>
-  static void print(std::ostream& stream, const std::tuple<Ts...>& tuple) {
+  static void print(std::ostream &stream, const std::tuple<Ts...> &tuple) {
     pretty_print(stream, std::get<0>(tuple));
   }
 };
 
 template <typename... Ts>
-inline bool pretty_print(std::ostream& stream, const std::tuple<Ts...>& value) {
+inline bool pretty_print(std::ostream &stream, const std::tuple<Ts...> &value) {
   stream << "{";
   pretty_print_tuple<sizeof...(Ts) - 1>::print(stream, value);
   stream << "}";
@@ -495,14 +495,14 @@ inline bool pretty_print(std::ostream& stream, const std::tuple<Ts...>& value) {
 }
 
 template <>
-inline bool pretty_print(std::ostream& stream, const std::tuple<>&) {
+inline bool pretty_print(std::ostream &stream, const std::tuple<> &) {
   stream << "{}";
 
   return true;
 }
 
 template <>
-inline bool pretty_print(std::ostream& stream, const time&) {
+inline bool pretty_print(std::ostream &stream, const time &) {
   using namespace std::chrono;
 
   const auto now = system_clock::now();
@@ -511,9 +511,9 @@ inline bool pretty_print(std::ostream& stream, const time&) {
 #if _MSC_VER >= 1600
   struct tm t;
   localtime_s(&t, &hms);
-  const std::tm* tm = &t;
+  const std::tm *tm = &t;
 #else
-  const std::tm* tm = std::localtime(&hms);
+  const std::tm *tm = std::localtime(&hms);
 #endif
   stream << "current time = " << std::put_time(tm, "%H:%M:%S") << '.' << std::setw(6) << std::setfill('0') << us;
   return false;
@@ -535,7 +535,7 @@ std::string decimalToBinary(T n) {
 }
 
 template <typename T>
-inline bool pretty_print(std::ostream& stream, const print_formatted<T>& value) {
+inline bool pretty_print(std::ostream &stream, const print_formatted<T> &value) {
   if (value.inner < 0) {
     stream << "-";
   }
@@ -566,7 +566,7 @@ inline bool pretty_print(std::ostream& stream, const print_formatted<T>& value) 
 }
 
 template <typename T>
-inline bool pretty_print(std::ostream& stream, const print_type<T>&) {
+inline bool pretty_print(std::ostream &stream, const print_type<T> &) {
   stream << type_name<T>();
 
   stream << " [sizeof: " << sizeof(T) << " byte, ";
@@ -590,22 +590,22 @@ inline bool pretty_print(std::ostream& stream, const print_type<T>&) {
 }
 
 template <typename Enum>
-inline typename std::enable_if<std::is_enum<Enum>::value, bool>::type pretty_print(std::ostream& stream,
-                                                                                   Enum const& value) {
+inline typename std::enable_if<std::is_enum<Enum>::value, bool>::type pretty_print(std::ostream &stream,
+                                                                                   Enum const &value) {
   using UnderlyingType = typename std::underlying_type<Enum>::type;
   stream << static_cast<UnderlyingType>(value);
 
   return true;
 }
 
-inline bool pretty_print(std::ostream& stream, const std::string& value) {
+inline bool pretty_print(std::ostream &stream, const std::string &value) {
   stream << '"' << value << '"';
   return true;
 }
 
 #if DBG_MACRO_CXX_STANDARD >= 17
 
-inline bool pretty_print(std::ostream& stream, const std::string_view& value) {
+inline bool pretty_print(std::ostream &stream, const std::string_view &value) {
   stream << '"' << std::string(value) << '"';
   return true;
 }
@@ -613,7 +613,7 @@ inline bool pretty_print(std::ostream& stream, const std::string_view& value) {
 #endif
 
 template <typename T1, typename T2>
-inline bool pretty_print(std::ostream& stream, const std::pair<T1, T2>& value) {
+inline bool pretty_print(std::ostream &stream, const std::pair<T1, T2> &value) {
   stream << "{";
   pretty_print(stream, value.first);
   stream << ", ";
@@ -625,7 +625,7 @@ inline bool pretty_print(std::ostream& stream, const std::pair<T1, T2>& value) {
 #if DBG_MACRO_CXX_STANDARD >= 17
 
 template <typename T>
-inline bool pretty_print(std::ostream& stream, const std::optional<T>& value) {
+inline bool pretty_print(std::ostream &stream, const std::optional<T> &value) {
   if (value) {
     stream << '{';
     pretty_print(stream, *value);
@@ -638,9 +638,9 @@ inline bool pretty_print(std::ostream& stream, const std::optional<T>& value) {
 }
 
 template <typename... Ts>
-inline bool pretty_print(std::ostream& stream, const std::variant<Ts...>& value) {
+inline bool pretty_print(std::ostream &stream, const std::variant<Ts...> &value) {
   stream << "{";
-  std::visit([&stream](auto&& arg) { pretty_print(stream, arg); }, value);
+  std::visit([&stream](auto &&arg) { pretty_print(stream, arg); }, value);
   stream << "}";
 
   return true;
@@ -649,8 +649,8 @@ inline bool pretty_print(std::ostream& stream, const std::variant<Ts...>& value)
 #endif
 
 template <typename Container>
-inline typename std::enable_if<detail::is_container<const Container&>::value, bool>::type pretty_print(
-    std::ostream& stream, const Container& value) {
+inline typename std::enable_if<detail::is_container<const Container &>::value, bool>::type
+pretty_print(std::ostream &stream, const Container &value) {
   stream << "{";
   const size_t size = detail::size(value);
   const size_t n = std::min(size_t{10}, size);
@@ -687,11 +687,11 @@ template <typename... T>
 using last_t = typename last<T...>::type;
 
 class DebugOutput {
- public:
+public:
   // Helper alias to avoid obscure type `const char* const*` in signature.
-  using expr_t = const char*;
+  using expr_t = const char *;
 
-  DebugOutput(const char* filepath, int line, const char* function_name)
+  DebugOutput(const char *filepath, int line, const char *function_name)
       : m_use_colorized_output(isColorizedOutputEnabled()) {
     std::string path = filepath;
     const std::size_t path_length = path.length();
@@ -704,7 +704,7 @@ class DebugOutput {
   }
 
   template <typename... T>
-  auto print(std::initializer_list<expr_t> exprs, std::initializer_list<std::string> types, T&&... values)
+  auto print(std::initializer_list<expr_t> exprs, std::initializer_list<std::string> types, T &&...values)
       -> last_t<T...> {
     if (exprs.size() != sizeof...(values)) {
       std::cerr << m_location << ansi(ANSI_WARN) << "The number of arguments mismatch, please check unprotected comma"
@@ -713,10 +713,10 @@ class DebugOutput {
     return print_impl(exprs.begin(), types.begin(), std::forward<T>(values)...);
   }
 
- private:
+private:
   template <typename T>
-  T&& print_impl(const expr_t* expr, const std::string* type, T&& value) {
-    const T& ref = value;
+  T &&print_impl(const expr_t *expr, const std::string *type, T &&value) {
+    const T &ref = value;
     std::stringstream stream_value;
     const bool print_expr_and_type = pretty_print(stream_value, ref);
 
@@ -736,12 +736,12 @@ class DebugOutput {
   }
 
   template <typename T, typename... U>
-  auto print_impl(const expr_t* exprs, const std::string* types, T&& value, U&&... rest) -> last_t<T, U...> {
+  auto print_impl(const expr_t *exprs, const std::string *types, T &&value, U &&...rest) -> last_t<T, U...> {
     print_impl(exprs, types, std::forward<T>(value));
     return print_impl(exprs + 1, types + 1, std::forward<U>(rest)...);
   }
 
-  const char* ansi(const char* code) const {
+  const char *ansi(const char *code) const {
     if (m_use_colorized_output) {
       return code;
     } else {
@@ -755,28 +755,28 @@ class DebugOutput {
 
   static constexpr std::size_t MAX_PATH_LENGTH = 20;
 
-  static constexpr const char* const ANSI_EMPTY = "";
-  static constexpr const char* const ANSI_DEBUG = "\x1b[02m";
-  static constexpr const char* const ANSI_WARN = "\x1b[33m";
-  static constexpr const char* const ANSI_EXPRESSION = "\x1b[36m";
-  static constexpr const char* const ANSI_VALUE = "\x1b[01m";
-  static constexpr const char* const ANSI_TYPE = "\x1b[32m";
-  static constexpr const char* const ANSI_RESET = "\x1b[0m";
+  static constexpr const char *const ANSI_EMPTY = "";
+  static constexpr const char *const ANSI_DEBUG = "\x1b[02m";
+  static constexpr const char *const ANSI_WARN = "\x1b[33m";
+  static constexpr const char *const ANSI_EXPRESSION = "\x1b[36m";
+  static constexpr const char *const ANSI_VALUE = "\x1b[01m";
+  static constexpr const char *const ANSI_TYPE = "\x1b[32m";
+  static constexpr const char *const ANSI_RESET = "\x1b[0m";
 };
 
 // Identity function to suppress "-Wunused-value" warnings in DBG_MACRO_DISABLE
 // mode
 template <typename T>
-T&& identity(T&& t) {
+T &&identity(T &&t) {
   return std::forward<T>(t);
 }
 
 template <typename T, typename... U>
-auto identity(T&&, U&&... u) -> last_t<U...> {
+auto identity(T &&, U &&...u) -> last_t<U...> {
   return identity(std::forward<U>(u)...);
 }
 
-}  // namespace dbg
+} // namespace dbg
 
 #ifndef DBG_MACRO_DISABLE
 
@@ -829,11 +829,11 @@ auto identity(T&&, U&&... u) -> last_t<U...> {
 
 #define DBG_TYPE_NAME(x) dbg::type_name<decltype(x)>()
 
-#define dbg(...)                                 \
-  dbg::DebugOutput(__FILE__, __LINE__, __func__) \
+#define dbg(...)                                                                                                       \
+  dbg::DebugOutput(__FILE__, __LINE__, __func__)                                                                       \
       .print({DBG_MAP(DBG_STRINGIFY, __VA_ARGS__)}, {DBG_MAP(DBG_TYPE_NAME, __VA_ARGS__)}, __VA_ARGS__)
 #else
 #define dbg(...) dbg::identity(__VA_ARGS__)
-#endif  // DBG_MACRO_DISABLE
+#endif // DBG_MACRO_DISABLE
 
-#endif  // DBG_MACRO_DBG_H
+#endif // DBG_MACRO_DBG_H
