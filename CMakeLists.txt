@@ -28,6 +28,8 @@ llvm_map_components_to_libnames(llvm_libs support)
 # mlir libs
 get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
 message(STATUS "dialect_libs: ${dialect_libs}")
+get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+message(STATUS "conversion_libs: ${conversion_libs}")
 
 # 3rdparty
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
@@ -44,11 +46,13 @@ add_executable(puzzle
   src/mlir/puzzle_types.cpp
   src/mlir/mlir_gen.cpp
   src/mlir/lower_to_affine.cpp
+  src/mlir/lower_to_llvm.cpp
 )
 
 target_link_libraries(puzzle
   ${llvm_libs}
   ${dialect_libs}
+  ${conversion_libs}
 
   MLIRAnalysis
   MLIRIR
@@ -56,4 +60,6 @@ target_link_libraries(puzzle
   MLIRSideEffectInterfaces
   MLIRTransforms
   MLIRSupport
+  MLIRLLVMToLLVMIRTranslation
+  MLIRExecutionEngine
 )

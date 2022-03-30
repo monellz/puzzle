@@ -158,6 +158,7 @@ struct KernelOpLowering : public OpRewritePattern<puzzle::KernelOp> {
 
               // 去掉load
               op->getOperand(0).setType(mem_type);
+
               // auto new_load = nested_builder.create<AffineLoadOp>(loc, op->getOperand(0), ValueRange({a0, a1, a2}));
               auto new_load = nested_builder.create<memref::LoadOp>(loc, op->getOperand(0), ValueRange({a0, a1, a2}));
               load_op.getResult().replaceAllUsesWith(new_load.getResult());
@@ -168,6 +169,7 @@ struct KernelOpLowering : public OpRewritePattern<puzzle::KernelOp> {
             } else if (puzzle::StoreOp s_op = llvm::dyn_cast<puzzle::StoreOp>(inner_operation)) {
               // 0 0 0
               op->getResult(0).setType(mem_type);
+
               // nested_builder.create<AffineStoreOp>(loc, s_op->getOperand(0), op->getResult(0), ivs);
               nested_builder.create<memref::StoreOp>(loc, s_op->getOperand(0), op->getResult(0), ivs);
             } else if (puzzle::ReturnOp r_op = llvm::dyn_cast<puzzle::ReturnOp>(inner_operation)) {
