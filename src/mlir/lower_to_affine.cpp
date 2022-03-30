@@ -105,7 +105,7 @@ struct FuncOpLowering : public OpRewritePattern<func::FuncOp> {
     dbg("done kernel");
     rewriter.setInsertionPointToEnd(&op.getBody().front());
     rewriter.create<func::ReturnOp>(loc);
-    op->dump();
+    // op->dump();
     return success();
   }
 };
@@ -133,11 +133,17 @@ struct KernelOpLowering : public OpRewritePattern<puzzle::KernelOp> {
 
     puzzle::GridType gt = op->getResult(0).getType().cast<puzzle::GridType>();
     mlir::Type mem_type = MemRefType::get(gt.getShape(), gt.getElementType());
-    llvm::SmallVector<int64_t, 4> lower_bound(gt.getRank(), 0);
-    // llvm::SmallVector<int64_t, 4> upper_bound(gt.getRank(), 64);
+    // TODO 这里需要pad信息
+    const int pad = 1;
+    llvm::SmallVector<int64_t, 4> lower_bound(gt.getRank(), pad);
+    llvm::SmallVector<int64_t, 4> upper_bound(gt.getRank(), 0);
+    for (size_t i = 0; i < gt.getRank(); ++i) {
+      // - pad
+      upper_bound[i] = gt.getShape()[i] - pad;
+    }
     llvm::SmallVector<int64_t, 4> steps(gt.getRank(), 1);
     buildAffineLoopNest(
-        rewriter, loc, lower_bound, gt.getShape(), steps, [&](OpBuilder &nested_builder, Location loc, ValueRange ivs) {
+        rewriter, loc, lower_bound, upper_bound, steps, [&](OpBuilder &nested_builder, Location loc, ValueRange ivs) {
           for (mlir::Operation &inner_operation : block.getOperations()) {
             if (puzzle::LoadOp load_op = llvm::dyn_cast<puzzle::LoadOp>(inner_operation)) {
               std::vector<int64_t> index;
@@ -173,7 +179,7 @@ struct KernelOpLowering : public OpRewritePattern<puzzle::KernelOp> {
               // nested_builder.create<AffineStoreOp>(loc, s_op->getOperand(0), op->getResult(0), ivs);
               nested_builder.create<memref::StoreOp>(loc, s_op->getOperand(0), op->getResult(0), ivs);
             } else if (puzzle::ReturnOp r_op = llvm::dyn_cast<puzzle::ReturnOp>(inner_operation)) {
-              llvm::errs() << inner_operation.getName() << " (return)\n";
+              // llvm::errs() << inner_operation.getName() << " (return)\n";
             } else if (arith::AddFOp add_op = llvm::dyn_cast<arith::AddFOp>(inner_operation)) {
               arith::AddFOp a0 = nested_builder.create<arith::AddFOp>(loc, rewriter.getF64Type(), add_op.getOperand(0),
                                                                       add_op.getOperand(1));
@@ -188,15 +194,15 @@ struct KernelOpLowering : public OpRewritePattern<puzzle::KernelOp> {
             }
           }
         });
-    op->getBlock()->getParentOp()->dump();
-    // 替换结果为后续push操作的第二个操作数
+    // op->getBlock()->getParentOp()->dump();
+    //  替换结果为后续push操作的第二个操作数
 
     auto use = op.getResult().getUses();
     // llvm::errs() << (*use).getDefiningOp()->getName() << "\n";
     //++use;
     dbg("adsadad");
     for (auto &d : use) {
-      llvm::errs() << d.getOwner()->getName() << "\n";
+      // llvm::errs() << d.getOwner()->getName() << "\n";
       if (puzzle::PushOp pushop = llvm::dyn_cast<puzzle::PushOp>(d.getOwner())) {
         op->getResult(0).replaceAllUsesWith(pushop->getOperand(1));
         break;
@@ -227,7 +233,7 @@ struct KernelOpLowering : public OpRewritePattern<puzzle::KernelOp> {
     */
     dbg("done kernel");
     // op->dump();
-    op->getBlock()->getParentOp()->dump();
+    // op->getBlock()->getParentOp()->dump();
     return success();
   }
 };

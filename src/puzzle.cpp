@@ -122,7 +122,7 @@ void dump_llvm(ast::Module *m) {
     dbg("good");
   }
 
-  module_ref->dump();
+  // module_ref->dump();
 
   mlir::registerLLVMDialectTranslation(*module_ref->getContext());
 

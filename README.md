@@ -242,3 +242,6 @@ module {
   }
 }
 ```
+
+### 关于生成.o与调用
+见script/gen_obj.sh

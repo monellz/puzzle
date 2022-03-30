@@ -2,3 +2,8 @@
 /build
 
 *.inc
+*.o
+*.bc
+*.ll
+*.s
+laplace_check

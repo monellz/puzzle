@@ -22,6 +22,11 @@ link_directories(${LLVM_BUILD_LIBRARY_DIR})
 
 add_definitions(${LLVM_DEFINITIONS} -DDBG_MACRO_NO_WARNING)
 
+OPTION(DBG "dbg-macro" ON)
+if(NOT ${DBG})
+  add_definitions(-DDBG_MACRO_DISABLE)
+endif()
+
 # llvm support
 llvm_map_components_to_libnames(llvm_libs support)
 
