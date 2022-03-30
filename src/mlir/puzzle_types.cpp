@@ -1,56 +1,36 @@
 #include "puzzle/mlir/puzzle_types.h"
 
+#include "puzzle/mlir/dialect.h"
+
 using namespace mlir;
 using namespace mlir::puzzle;
 
 namespace mlir::puzzle {
 
-namespace detail {
-
-struct GridTypeStorage : public mlir::TypeStorage {
-  GridTypeStorage(Type elementType, unsigned rank) : TypeStorage(), elementType(elementType), rank(rank) {}
-
-  // 用于hash
-  // 一个grid由元素的type(可能fp64/fp32)和rank组成
-  using KeyTy = std::pair<mlir::Type, unsigned>;
-  bool operator==(const KeyTy &key) const { return key == KeyTy(elementType, getRank()); }
-  Type getElementType() const { return elementType; }
-  unsigned getRank() const { return rank; }
-
-  static GridTypeStorage *construct(TypeStorageAllocator &allocator, const KeyTy &key) {
-    return new (allocator.allocate<GridTypeStorage>()) GridTypeStorage(key.first, key.second);
-  }
-
-  mlir::Type elementType;
-  const unsigned rank;
-};
-
-struct FieldTypeStorage : public GridTypeStorage {
-  using GridTypeStorage::GridTypeStorage;
-  static FieldTypeStorage *construct(TypeStorageAllocator &allocator, const KeyTy &key) {
-    return new (allocator.allocate<GridTypeStorage>()) FieldTypeStorage(key.first, key.second);
-  }
-};
-
-struct TempTypeStorage : public GridTypeStorage {
-  using GridTypeStorage::GridTypeStorage;
-  static TempTypeStorage *construct(TypeStorageAllocator &allocator, const KeyTy &key) {
-    return new (allocator.allocate<GridTypeStorage>()) TempTypeStorage(key.first, key.second);
-  }
-};
-
-}  // namespace detail
-
-bool GridType::classof(Type type) { return type.isa<FieldType, TempType>(); }
+// bool GridType::classof(Type type) { return type.isa<FieldType, TempType>(); }
 Type GridType::getElementType() const { return static_cast<ImplType *>(impl)->getElementType(); }
-unsigned GridType::getRank() const { return static_cast<ImplType *>(impl)->getRank(); }
+size_t GridType::getRank() const { return static_cast<ImplType *>(impl)->getRank(); }
+llvm::ArrayRef<int64_t> GridType::getShape() const { return static_cast<ImplType *>(impl)->getShape(); }
+bool GridType::classof(Type type) { return llvm::isa<PuzzleDialect>(type.getDialect()); }
 
-FieldType FieldType::get(Type elementType, unsigned rank) {
-  return Base::get(elementType.getContext(), elementType, rank);
+FieldType FieldType::get(Type elementType, ArrayRef<int64_t> shape) {
+  return Base::get(elementType.getContext(), elementType, shape);
 }
 
-TempType TempType::get(Type elementType, unsigned rank) {
-  return Base::get(elementType.getContext(), elementType, rank);
+FieldType FieldType::get(Type elementType, size_t rank) {
+  llvm::SmallVector<int64_t, 3> shape;
+  for (size_t i = 0; i < rank; ++i) shape.push_back(GridType::kDynamicDimension);
+  return FieldType::get(elementType, shape);
+}
+
+TempType TempType::get(Type elementType, ArrayRef<int64_t> shape) {
+  return Base::get(elementType.getContext(), elementType, shape);
+}
+
+TempType TempType::get(Type elementType, size_t rank) {
+  llvm::SmallVector<int64_t, 3> shape;
+  for (size_t i = 0; i < rank; ++i) shape.push_back(GridType::kDynamicDimension);
+  return TempType::get(elementType, shape);
 }
 
 }  // namespace mlir::puzzle

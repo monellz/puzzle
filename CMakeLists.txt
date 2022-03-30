@@ -43,6 +43,7 @@ add_executable(puzzle
   src/mlir/dialect.cpp
   src/mlir/puzzle_types.cpp
   src/mlir/mlir_gen.cpp
+  src/mlir/lower_to_affine.cpp
 )
 
 target_link_libraries(puzzle

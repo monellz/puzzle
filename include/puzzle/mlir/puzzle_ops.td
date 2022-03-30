@@ -3,8 +3,6 @@
 
 
 include "puzzle/mlir/puzzle_base.td"
-include "puzzle/mlir/puzzle_interfaces.td"
-
 include "mlir/IR/OpBase.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
@@ -12,32 +10,34 @@ include "mlir/Interfaces/SideEffectInterfaces.td"
 
 // index op
 
-def MoveOp: Puzzle_Op<"move", [NoSideEffect]> {
-  let summary = "puzzle move operation";
+def PopOp: Puzzle_Op<"pop", [NoSideEffect]> {
+  let summary = "puzzle pop operation";
   let description = [{
-    field/temp -> field/temp
+    field -> temp
     Example:
       $0 = puzzle.load %some_field: asdasdad -> temp
   }];
 
-  let arguments = (ins AnyTypeOf<[Puzzle_Temp, Puzzle_Field]>:$input);
-  let results = (outs AnyTypeOf<[Puzzle_Temp, Puzzle_Field]>:$res);
+  let arguments = (ins Puzzle_Field:$input);
+  let results = (outs Puzzle_Temp:$res);
 
 
-  let builders = [
-    // 默认移动到temp grid
-    OpBuilder<(ins "Value":$input, CArg<"bool", "true">:$to_temp), [{
-      $_state.addOperands(input);
-      auto input_type = input.getType().cast<GridType>();
-      if (to_temp) {
-        $_state.addTypes(TempType::get(input_type.getElementType(), input_type.getRank()));
-      } else {
-        $_state.addTypes(FieldType::get(input_type.getElementType(), input_type.getRank()));
-      }
-    }]>
-  ];
+  //let assemblyFormat
+  // let hasVerifier = 1;
+}
 
-  // let assemblyFormat
+def PushOp: Puzzle_Op<"push", [Terminator, HasParent<"func::FuncOp">]> {
+  let summary = "puzzle push operation";
+  let description = [{
+    temp -> field
+  }];
+
+  let arguments = (ins
+    Puzzle_Temp:$temp,
+    Puzzle_Field:$res);
+
+  let results = (outs);
+  //let assemblyFormat
   // let hasVerifier = 1;
 }
 
@@ -122,7 +122,7 @@ def KernelOp: Puzzle_Op<"kernel", [IsolatedFromAbove, SingleBlockImplicitTermina
   //let hasVerifier = 1;
 }
 
-def ReturnOp: Puzzle_Op<"return", [Terminator, HasParent<"KernelOp">]> {
+def ReturnOp: Puzzle_Op<"return", [NoSideEffect, Terminator, HasParent<"KernelOp">]> {
   let summary = "puzzle return";
   let description = [{
     return

@@ -6,9 +6,19 @@ include "mlir/IR/OpBase.td"
 
 // dialect
 def Puzzle_Dialect : Dialect {
-    let name = "puzzle";
-    let description = [{A puzzle solver~}];
-    let cppNamespace = "::mlir::puzzle";
+  let name = "puzzle";
+  let description = [{A puzzle solver~}];
+  let dependentDialects = [
+    "::mlir::func::FuncDialect",
+    "::mlir::arith::ArithmeticDialect",
+  ];
+  let cppNamespace = "::mlir::puzzle";
+
+  let extraClassDeclaration = [{
+    void printType(Type type, DialectAsmPrinter &printer) const {
+      detail::printType(type, printer);
+    }
+  }];
 }
 
 
@@ -32,6 +42,21 @@ class Puzzle_Op<string mnemonic, list<Trait> traits= []>: Op<Puzzle_Dialect, mne
     // let hasVerifier = 1;
     //let verifier = [{ return ::verify(*this); }];
 }
+
+
+
+def ShapeInferenceOpInterface : OpInterface<"ShapeInference"> {
+  let description = [{
+    Interface to access a registered method to infer the return types for an
+    operation that can be used during type inference.
+  }];
+
+  let methods = [
+    InterfaceMethod<"Infer and set the output shape for the current operation.",
+                    "void", "inferShapes">
+  ];
+}
+
 
 #endif
 // mlir-tblgen需要td文件最后以空行结尾

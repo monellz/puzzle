@@ -6,6 +6,8 @@
 #include <string_view>
 #include <vector>
 
+#include "dbg/dbg.h"
+
 namespace mlir::puzzle::ast {
 
 #define DEF_CLASSOF(base_type, cond) \
@@ -138,6 +140,7 @@ struct Module {
   std::vector<std::unique_ptr<Kernel>> kernels;
   Location loc;
   DEF_UPDATE_LOC()
+  void kernel_reorder() { dbg("reorder unimplemented"); }
 };
 
 // 一些用在parser act的函数

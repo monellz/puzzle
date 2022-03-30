@@ -9,10 +9,7 @@
 
 namespace mlir::puzzle {
 
-class MLIRGen {
- public:
-  static mlir::OwningOpRef<mlir::ModuleOp> dump(ast::Module *m, mlir::MLIRContext &context);
-};
+mlir::OwningOpRef<mlir::ModuleOp> mlir_gen(ast::Module *m, mlir::MLIRContext &context);
 
 }  // namespace mlir::puzzle
 
