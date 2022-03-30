@@ -1,70 +1,41 @@
 cmake_minimum_required(VERSION 3.13.4)
-project(puzzle LANGUAGES CXX C)
+project(puzzle-dialect LANGUAGES CXX C)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -pedantic -g -Wall -Wno-missing-braces")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -fsanitize=leak -static-libasan")
+set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
 
-# For MLIR/LLVM
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to conform to")
+
 find_package(MLIR REQUIRED CONFIG)
-list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
-list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
 
 message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-message(STATUS "LLVM_BUILD_LIBRARY_DIR: ${LLVM_BUILD_LIBRARY_DIR}")
-message(STATUS "LLVM_DEFINITIONS: ${LLVM_DEFINITIONS}")
+set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/bin)
+set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/lib)
+set(MLIR_BINARY_DIR ${CMAKE_BINARY_DIR})
+
+list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
+list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
+include(TableGen)
+include(AddLLVM)
+include(AddMLIR)
+include(HandleLLVMOptions)
+
+if(MLIR_ENABLE_BINDINGS_PYTHON)
+  include(MLIRDetectPythonEnv)
+  mlir_configure_python_dev_packages()
+endif()
 
 include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(${MLIR_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_BINARY_DIR}/include)
+include_directories(${PROJECT_BINARY_DIR}/3rdparty/include)
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
+add_definitions(${LLVM_DEFINITIONS})
 
-add_definitions(${LLVM_DEFINITIONS} -DDBG_MACRO_NO_WARNING)
-
-OPTION(DBG "dbg-macro" ON)
-if(NOT ${DBG})
-  add_definitions(-DDBG_MACRO_DISABLE)
-endif()
-
-# llvm support
-llvm_map_components_to_libnames(llvm_libs support)
-
-# mlir libs
-get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
-message(STATUS "dialect_libs: ${dialect_libs}")
-get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
-message(STATUS "conversion_libs: ${conversion_libs}")
-
-# 3rdparty
-include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
-
-# For this project
-include_directories(${PROJECT_SOURCE_DIR}/include/)
-add_executable(puzzle
-  src/puzzle.cpp
-
-  src/frontend/ast.cpp
-  src/frontend/parser.cpp
-
-  src/mlir/dialect.cpp
-  src/mlir/puzzle_types.cpp
-  src/mlir/mlir_gen.cpp
-  src/mlir/lower_to_affine.cpp
-  src/mlir/lower_to_llvm.cpp
-)
-
-target_link_libraries(puzzle
-  ${llvm_libs}
-  ${dialect_libs}
-  ${conversion_libs}
-
-  MLIRAnalysis
-  MLIRIR
-  MLIRParser
-  MLIRSideEffectInterfaces
-  MLIRTransforms
-  MLIRSupport
-  MLIRLLVMToLLVMIRTranslation
-  MLIRExecutionEngine
-)
+add_subdirectory(include)
+add_subdirectory(lib)
+# add_subdirectory(test)
+add_subdirectory(puzzle-opt)
+add_subdirectory(puzzle-translate)
