@@ -4,6 +4,8 @@
 include "Puzzle/PuzzleDialect.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
+include "mlir/IR/FunctionInterfaces.td"
+include "mlir/IR/SymbolInterfaces.td"
 
 def Puzzle_FooOp : Puzzle_Op<"foo", [NoSideEffect,
                                              SameOperandsAndResultType]> {
@@ -31,5 +33,49 @@ def Puzzle_FooOp : Puzzle_Op<"foo", [NoSideEffect,
         $input attr-dict `:` type($input)
     }];
 }
+
+def Puzzle_StencilOp : Puzzle_Op<"stencil", [
+    FunctionOpInterface, IsolatedFromAbove, Symbol
+  ]> {
+  let summary = "stencil operation";
+  let description = [{
+    Example:
+
+    ```mlir
+    puzzle.stencil @laplacian() {
+      ...
+      puzzle.return
+    }
+    ```
+  }];
+
+  let arguments = (ins
+    SymbolNameAttr:$sym_name,
+    TypeAttrOf<FunctionType>:$function_type
+  );
+  let regions = (region AnyRegion:$body);
+
+  let builders = [OpBuilder<(ins
+    "StringRef":$name, "FunctionType":$type,
+    CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs)
+  >];
+  let extraClassDeclaration = [{
+    //===------------------------------------------------------------------===//
+    // FunctionOpInterface Methods
+    //===------------------------------------------------------------------===//
+    FunctionType getFunctionType() { return function_type(); }
+
+    /// Returns the argument types of this function.
+    ArrayRef<Type> getArgumentTypes() { return getFunctionType().getInputs(); }
+
+    /// Returns the result types of this function.
+    ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
+  }];
+  // let hasCustomAssemblyFormat = 1;
+  // let skipDefaultBuilders = 1;
+}
+
+
+
 
 #endif

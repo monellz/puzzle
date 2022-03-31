@@ -11,6 +11,7 @@ add_llvm_executable(puzzle-translate
   dsl/ast.cpp
   dsl/parser.cpp
   dsl/context.cpp
+  dsl/analyst.cpp
 )
 llvm_update_compile_flags(puzzle-translate)
 target_link_libraries(puzzle-translate

@@ -1,4 +1,3 @@
-#include "llvm/ADT/Twine.h"
 #include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/SourceMgr.h"
@@ -31,20 +30,6 @@ public:
   std::string loc(T *node) {
     const auto &loc = node->loc;
     return (llvm::Twine("@") + loc.fn + ":" + llvm::Twine(loc.line) + ":" + llvm::Twine(loc.col)).str();
-  }
-
-  template <typename T>
-  std::string vec_str(std::vector<T> &vec) {
-    if (vec.size() == 0)
-      return "[]";
-    else {
-      std::string str = (llvm::Twine("[") + llvm::Twine(vec[0])).str();
-      for (size_t i = 1; i < vec.size(); ++i) {
-        str += (llvm::Twine(",") + llvm::Twine(vec[i])).str();
-      }
-      str += "]";
-      return str;
-    }
   }
 
   explicit Dumper(llvm::raw_ostream &output) : cur_level(0), output(output) {}
@@ -86,14 +71,25 @@ public:
         .Case<In, Out, Pad, Bound, Iter>([&](auto *node) { this->dump(node); })
         .Default([&](Info *) { llvm_unreachable("unknown info type"); });
   }
+
   void dump(In *in) {
     Indent indent(cur_level, output);
-    output << "In { ident: " << in->ident << " } " << loc(in) << "\n";
+    assert(in->idents.size() > 0);
+    output << "In { ident: " << in->idents[0];
+    for (size_t i = 1; i < in->idents.size(); ++i) {
+      output << ", " << in->idents[i];
+    }
+    output << " } " << loc(in) << "\n";
   }
 
   void dump(Out *out) {
     Indent indent(cur_level, output);
-    output << "Out { ident: " << out->ident << " } " << loc(out) << "\n";
+    assert(out->idents.size() > 0);
+    output << "Out { ident: " << out->idents[0];
+    for (size_t i = 1; i < out->idents.size(); ++i) {
+      output << ", " << out->idents[i];
+    }
+    output << " } " << loc(out) << "\n";
   }
 
   void dump(Pad *pad) {

@@ -103,11 +103,27 @@ rhs = [
 lhs = 'Info'
 ty = 'std::unique_ptr<Info>'
 rhs = [
-  { rhs = ['In', 'Colon', 'Ident', 'Semi'], act = 'auto __i = std::make_unique<In>(_3.piece); __i->update_loc(lexer); __ = std::move(__i);'},
-  { rhs = ['Out', 'Colon', 'Ident', 'Semi'], act = 'auto __i = std::make_unique<Out>(_3.piece); __i->update_loc(lexer); __ = std::move(__i);'},
+  { rhs = ['In', 'Colon', 'IdentList', 'Semi'], act = 'auto __i = std::make_unique<In>(std::move(_3)); __i->update_loc(lexer); __ = std::move(__i);'},
+  { rhs = ['Out', 'Colon', 'IdentList', 'Semi'], act = 'auto __i = std::make_unique<Out>(std::move(_3)); __i->update_loc(lexer); __ = std::move(__i);'},
   { rhs = ['Pad', 'Colon', 'IntLit', 'Semi'], act = 'auto __i = std::make_unique<Pad>(to_dec(_3.piece)); __i->update_loc(lexer); __ = std::move(__i);'},
   { rhs = ['Iter', 'Colon', 'IntLit', 'Semi'], act = 'auto __i = std::make_unique<Iter>(to_dec(_3.piece)); __i->update_loc(lexer); __ = std::move(__i);'},
   { rhs = ['Bound', 'Colon', 'LBrk', 'Index', 'RBrk', 'RArrow', 'LBrk', 'Index', 'RBrk', 'Semi'], act = 'auto __i = std::make_unique<Bound>(std::move(_4), std::move(_8)); __i->update_loc(lexer); __ = std::move(__i);'},
+]
+
+[[production]]
+lhs = 'IdentList'
+ty = 'std::vector<std::string_view>'
+rhs = [
+  { rhs = ['IdentList1'], act = '__ = std::move(_1);' },
+  { rhs = [], act = '__ = std::move(std::vector<std::string_view>());' },
+]
+
+[[production]]
+lhs = 'IdentList1'
+ty = 'std::vector<std::string_view>'
+rhs = [
+  { rhs = ['IdentList1', 'Comma', 'Ident'], act = '_1.push_back(_3.piece); __ = std::move(_1);'},
+  { rhs = ['Ident'], act = 'auto __v = std::vector<std::string_view>(); __v.push_back(_1.piece); __ = std::move(__v);'},
 ]
 
 [[production]]

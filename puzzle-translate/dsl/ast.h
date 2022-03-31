@@ -10,6 +10,7 @@
 #include <cassert>
 
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/Twine.h"
 
 // TODO: parser的loc有问题，需要用token的fn/line/col，要给token添加fn定义
 // TODO: update_loc换成loc?
@@ -28,6 +29,20 @@ namespace mlir::puzzle::dsl {
 // 一些用在parser act的函数
 inline int64_t to_dec(std::string_view sv) { return (int64_t)strtol(sv.data(), nullptr, 10); }
 inline double to_double(std::string_view sv) { return strtod(sv.data(), nullptr); }
+
+template <typename T>
+std::string vec_str(std::vector<T> &vec) {
+  if (vec.size() == 0)
+    return "[]";
+  else {
+    std::string str = (llvm::Twine("[") + llvm::Twine(vec[0])).str();
+    for (size_t i = 1; i < vec.size(); ++i) {
+      str += (llvm::Twine(",") + llvm::Twine(vec[i])).str();
+    }
+    str += "]";
+    return str;
+  }
+}
 
 struct Location {
   std::string_view fn = "-";
@@ -148,15 +163,15 @@ struct Info {
 
 struct In : public Info {
   DEF_CLASSOF(Info, p->kind == Info::kIn)
-  std::string_view ident;
-  In(std::string_view ident) : Info(Info::kIn), ident(ident) {}
+  std::vector<std::string_view> idents;
+  In(std::vector<std::string_view> idents) : Info(Info::kIn), idents(std::move(idents)) {}
   ~In() {}
 };
 
 struct Out : public Info {
   DEF_CLASSOF(Info, p->kind == Info::kOut)
-  std::string_view ident;
-  Out(std::string_view ident) : Info(Info::kOut), ident(ident) {}
+  std::vector<std::string_view> idents;
+  Out(std::vector<std::string_view> idents) : Info(Info::kOut), idents(std::move(idents)) {}
   ~Out() {}
 };
 
