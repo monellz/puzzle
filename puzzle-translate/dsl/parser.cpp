@@ -862,7 +862,9 @@ std::variant<std::unique_ptr<Module>, Token> Parser::parse(Lexer &lexer) {
         stk.pop_back();
         [[maybe_unused]] Token _1(std::move(*std::get_if<Token>(&stk.back().first)));
         stk.pop_back();
-        __ = std::make_unique<Const>(_1.piece, to_double(_3.piece));
+        auto __c = std::make_unique<Const>(_1.piece, to_double(_3.piece));
+        __c->update_loc(lexer);
+        __ = std::move(__c);
         break;
       }
       case 5: {
@@ -876,7 +878,9 @@ std::variant<std::unique_ptr<Module>, Token> Parser::parse(Lexer &lexer) {
         stk.pop_back();
         [[maybe_unused]] Token _1(std::move(*std::get_if<Token>(&stk.back().first)));
         stk.pop_back();
-        __ = std::make_unique<Stencil>(_1.piece, std::move(_4));
+        auto __s = std::make_unique<Stencil>(_1.piece, std::move(_4));
+        __s->update_loc(lexer);
+        __ = std::move(__s);
         break;
       }
       case 6: {
@@ -895,7 +899,9 @@ std::variant<std::unique_ptr<Module>, Token> Parser::parse(Lexer &lexer) {
         stk.pop_back();
         [[maybe_unused]] Token _1(std::move(*std::get_if<Token>(&stk.back().first)));
         stk.pop_back();
-        __ = std::make_unique<Kernel>(_1.piece, std::move(_5));
+        auto __k = std::make_unique<Kernel>(_1.piece, std::move(_5));
+        __k->update_loc(lexer);
+        __ = std::move(__k);
         break;
       }
       case 7: {

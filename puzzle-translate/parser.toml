@@ -74,21 +74,21 @@ rhs = [
 lhs = 'ConstDecl'
 ty = 'std::unique_ptr<Decl>'
 rhs = [
-  { rhs = ['Ident', 'Assign', 'FloatLit', 'Semi'], act = '__ = std::make_unique<Const>(_1.piece, to_double(_3.piece));'},
+  { rhs = ['Ident', 'Assign', 'FloatLit', 'Semi'], act = 'auto __c = std::make_unique<Const>(_1.piece, to_double(_3.piece)); __c->update_loc(lexer); __ = std::move(__c);'},
 ]
 
 [[production]]
 lhs = 'StencilDecl'
 ty = 'std::unique_ptr<Decl>'
 rhs = [
-  { rhs = ['Ident', 'Assign', 'Stencil', 'Block', 'Semi'], act = '__ = std::make_unique<Stencil>(_1.piece, std::move(_4));'},
+  { rhs = ['Ident', 'Assign', 'Stencil', 'Block', 'Semi'], act = 'auto __s = std::make_unique<Stencil>(_1.piece, std::move(_4)); __s->update_loc(lexer); __ = std::move(__s);'},
 ]
 
 [[production]]
 lhs = 'KernelDecl'
 ty = 'std::unique_ptr<Decl>'
 rhs = [
-  { rhs = ['Ident', 'Assign', 'Kernel', 'LBrc', 'InfoList', 'RBrc', 'Semi'], act = '__ = std::make_unique<Kernel>(_1.piece, std::move(_5));'},
+  { rhs = ['Ident', 'Assign', 'Kernel', 'LBrc', 'InfoList', 'RBrc', 'Semi'], act = 'auto __k = std::make_unique<Kernel>(_1.piece, std::move(_5)); __k->update_loc(lexer); __ = std::move(__k);'},
 ]
 
 [[production]]

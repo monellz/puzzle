@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.13.4)
 project(puzzle-dialect LANGUAGES CXX C)
 
 set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to conform to")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to conform to")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -Werror -fsanitize=leak -static-libasan")
 
 find_package(MLIR REQUIRED CONFIG)
 
@@ -35,6 +36,7 @@ include_directories(${PROJECT_BINARY_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
+add_definitions(-DDBG_MACRO_NO_WARNING)
 
 add_subdirectory(include)
 add_subdirectory(lib)

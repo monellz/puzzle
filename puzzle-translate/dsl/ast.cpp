@@ -1,7 +1,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/TypeSwitch.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/SourceMgr.h"
 
 #include "dbg/dbg.h"
 #include "puzzle-translate/dsl/ast.h"
@@ -13,17 +13,18 @@ namespace {
 class Dumper {
 public:
   struct Indent {
-    explicit Indent(int &level) : level(level) {
+    explicit Indent(int &level, llvm::raw_ostream &output) : level(level), output(output) {
       ++level;
       (*this)();
     }
     void operator()() {
       for (int i = 0; i < level; ++i) {
-        llvm::errs() << "  ";
+        output << "  ";
       }
     }
     ~Indent() { --level; }
     int &level;
+    llvm::raw_ostream &output;
   };
 
   template <typename T>
@@ -46,10 +47,10 @@ public:
     }
   }
 
-  Dumper() : cur_level(0) {}
+  explicit Dumper(llvm::raw_ostream &output) : cur_level(0), output(output) {}
 
   void dump(Module *m) {
-    llvm::errs() << "Module " << loc(m) << "\n";
+    output << "Module " << loc(m) << "\n";
     for (auto &d : m->decls) {
       dump(d.get());
     }
@@ -62,17 +63,19 @@ public:
   }
 
   void dump(Const *c) {
-    Indent indent(cur_level);
-    llvm::errs() << "Const { ident: " << c->ident << ", init: " << c->init << " } " << loc(c) << "\n";
+    Indent indent(cur_level, output);
+    output << "Const { ident: " << c->ident << ", init: " << c->init << " } " << loc(c) << "\n";
   }
+
   void dump(Stencil *s) {
-    Indent indent(cur_level);
-    llvm::errs() << "Stencil { ident: " << s->ident << " } " << loc(s) << "\n";
+    Indent indent(cur_level, output);
+    output << "Stencil { ident: " << s->ident << " } " << loc(s) << "\n";
     dump(s->body.get());
   }
+
   void dump(Kernel *k) {
-    Indent indent(cur_level);
-    llvm::errs() << "Kernel { ident: " << k->ident << " } " << loc(k) << "\n";
+    Indent indent(cur_level, output);
+    output << "Kernel { ident: " << k->ident << " } " << loc(k) << "\n";
     for (auto &i : k->infos) {
       dump(i.get());
     }
@@ -84,26 +87,28 @@ public:
         .Default([&](Info *) { llvm_unreachable("unknown info type"); });
   }
   void dump(In *in) {
-    Indent indent(cur_level);
-    llvm::errs() << "In { ident: " << in->ident << " } " << loc(in) << "\n";
+    Indent indent(cur_level, output);
+    output << "In { ident: " << in->ident << " } " << loc(in) << "\n";
   }
+
   void dump(Out *out) {
-    Indent indent(cur_level);
-    llvm::errs() << "Out { ident: " << out->ident << " } " << loc(out) << "\n";
+    Indent indent(cur_level, output);
+    output << "Out { ident: " << out->ident << " } " << loc(out) << "\n";
   }
 
   void dump(Pad *pad) {
-    Indent indent(cur_level);
-    llvm::errs() << "Pad { size: " << pad->size << " } " << loc(pad) << "\n";
+    Indent indent(cur_level, output);
+    output << "Pad { size: " << pad->size << " } " << loc(pad) << "\n";
   }
 
   void dump(Iter *iter) {
-    Indent indent(cur_level);
-    llvm::errs() << "Iter { num: " << iter->num << " } " << loc(iter) << "\n";
+    Indent indent(cur_level, output);
+    output << "Iter { num: " << iter->num << " } " << loc(iter) << "\n";
   }
+
   void dump(Bound *b) {
-    Indent indent(cur_level);
-    llvm::errs() << "Bound { lb: " << vec_str(b->lb) << ", ub: " << vec_str(b->ub) << " } " << loc(b) << "\n";
+    Indent indent(cur_level, output);
+    output << "Bound { lb: " << vec_str(b->lb) << ", ub: " << vec_str(b->ub) << " } " << loc(b) << "\n";
   }
 
   void dump(Stmt *s) {
@@ -113,22 +118,23 @@ public:
   }
 
   void dump(Assign *a) {
-    Indent indent(cur_level);
-    llvm::errs() << "Assign { ident: " << a->ident << ", index: " << vec_str(a->index) << " } " << loc(a) << "\n";
+    Indent indent(cur_level, output);
+    output << "Assign { ident: " << a->ident << ", index: " << vec_str(a->index) << " } " << loc(a) << "\n";
     dump(a->rhs.get());
   }
+
   void dump(If *i) {
-    Indent indent(cur_level);
-    llvm::errs() << "If { cond + true_path" << (i->on_false == nullptr ? "" : " + false_path") << " } " << loc(i)
-                 << "\n";
+    Indent indent(cur_level, output);
+    output << "If { cond + true_path" << (i->on_false == nullptr ? "" : " + false_path") << " } " << loc(i) << "\n";
     dump(i->cond.get());
     dump(i->on_true.get());
     if (i->on_false)
       dump(i->on_false.get());
   }
+
   void dump(Block *b) {
-    Indent indent(cur_level);
-    llvm::errs() << "Block " << loc(b) << "\n";
+    Indent indent(cur_level, output);
+    output << "Block " << loc(b) << "\n";
     for (auto &s : b->stmts) {
       dump(s.get());
     }
@@ -141,7 +147,7 @@ public:
   }
 
   void dump(Binary *b) {
-    Indent indent(cur_level);
+    Indent indent(cur_level, output);
     std::string kind_str = "unknown";
     switch (b->kind) {
     case Expr::kAdd:
@@ -186,30 +192,31 @@ public:
     default:
       llvm_unreachable("unknown binary type");
     }
-    llvm::errs() << "Binary { kind: " << kind_str << " } " << loc(b) << "\n";
+    output << "Binary { kind: " << kind_str << " } " << loc(b) << "\n";
     dump(b->lhs.get());
     dump(b->rhs.get());
   }
 
   void dump(Access *a) {
-    Indent indent(cur_level);
+    Indent indent(cur_level, output);
     if (a->index.size() == 0) {
-      llvm::errs() << "Access { ident: " << a->ident << " } " << loc(a) << "\n";
+      output << "Access { ident: " << a->ident << " } " << loc(a) << "\n";
     } else {
-      llvm::errs() << "Access { ident: " << a->ident << ", index: " << vec_str(a->index) << " } " << loc(a) << "\n";
+      output << "Access { ident: " << a->ident << ", index: " << vec_str(a->index) << " } " << loc(a) << "\n";
     }
   }
 
   void dump(FloatLit *f) {
-    Indent indent(cur_level);
-    llvm::errs() << "FloatLit { val: " << f->val << " } " << loc(f) << "\n";
+    Indent indent(cur_level, output);
+    output << "FloatLit { val: " << f->val << " } " << loc(f) << "\n";
   }
 
   int cur_level;
+  llvm::raw_ostream &output;
 };
 
 } // namespace
 
-void dump(Module *m) { Dumper().dump(m); }
+void dump(llvm::raw_ostream &output, Module *m) { Dumper(output).dump(m); }
 
 } // namespace mlir::puzzle::dsl

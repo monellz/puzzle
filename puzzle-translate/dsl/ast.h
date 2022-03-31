@@ -9,6 +9,10 @@
 #include <optional>
 #include <cassert>
 
+#include "llvm/Support/raw_ostream.h"
+
+// TODO: parser的loc有问题，需要用token的fn/line/col，要给token添加fn定义
+// TODO: update_loc换成loc?
 namespace mlir::puzzle::dsl {
 
 #define DEF_CLASSOF(base_type, cond)                                                                                   \
@@ -193,7 +197,7 @@ struct Module {
   DEF_UPDATE_LOC()
 };
 
-void dump(Module *m);
+void dump(llvm::raw_ostream &output, Module *m);
 
 } // namespace mlir::puzzle::dsl
 
