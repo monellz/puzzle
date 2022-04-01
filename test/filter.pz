@@ -23,10 +23,10 @@ flux_divergence = stencil {
 };
 
 
-filter = kernel {
+filter = kernel<2> {
   In: phi, alpha;
   Out: result;
   Pad: 2;
   Iter: 1;
-  Bound: [0, 0, 0] -> [64, 64, 64];
+  Bound: [0, 0] -> [64, 64];
 };

@@ -21,6 +21,9 @@
 #include "puzzle-translate/dsl/context.h"
 
 namespace mlir::puzzle {
+void registerAllDialects(DialectRegistry &registry) {
+  registry.insert<func::FuncDialect, arith::ArithmeticDialect, cf::ControlFlowDialect, PuzzleDialect>();
+}
 
 void registerPuzzleTranslations() {
   TranslateRegistration dsl_to_ast(
@@ -55,6 +58,7 @@ mlir::LogicalResult puzzleTranslateMain(int argc, char **argv) {
   registerPuzzleTranslations();
 
   mlir::DialectRegistry registry;
+  registerAllDialects(registry);
 
   static llvm::cl::opt<std::string> inputFilename(llvm::cl::Positional, llvm::cl::desc("<input dsl file>"),
                                                   llvm::cl::init("-"));
@@ -82,8 +86,8 @@ mlir::LogicalResult puzzleTranslateMain(int argc, char **argv) {
 
   auto processBuffer = [&](std::unique_ptr<llvm::MemoryBuffer> ownedBuffer, llvm::raw_ostream &os) {
     mlir::MLIRContext context;
-    context.allowUnregisteredDialects();
     context.appendDialectRegistry(registry);
+    context.loadAllAvailableDialects();
     llvm::SourceMgr sourceMgr;
     sourceMgr.AddNewSourceBuffer(std::move(ownedBuffer), llvm::SMLoc());
     mlir::SourceMgrDiagnosticHandler diagHandler(sourceMgr, &context);

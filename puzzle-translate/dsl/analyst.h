@@ -14,10 +14,13 @@ class Analyst {
 public:
   struct KernelInfo {
     std::string_view ident;
+    size_t rank;
     std::vector<std::string_view> in, out;
     std::vector<int64_t> lb, ub;
-    int64_t iter, pad;
+    int64_t iter = -1, pad = -1;
   };
+
+  // TODO: 做一个StencilInfo的类似结构？
 
   std::unordered_map<std::string_view, double> const_map;
   std::unordered_map<std::string_view, std::unordered_set<std::string_view>> stencil_in, stencil_out;
@@ -26,6 +29,13 @@ public:
   // 注意有些stencil需要多个输入
   std::unordered_map<std::string_view, std::unordered_set<std::string_view>> downstream_stencil;
   std::unordered_map<std::string_view, KernelInfo> kernel_info;
+  std::unordered_map<std::string_view, size_t> stencil_rank;
+
+  struct IfInfo {
+    std::unordered_set<std::string_view> phi_ident;
+  };
+  std::unordered_map<If *, IfInfo> if_info;
+  std::vector<If *> current_if_stack;
 
   void work(Module *m);
 

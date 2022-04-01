@@ -99,7 +99,7 @@ def Puzzle_StencilOp : Puzzle_Op<"stencil", [
     ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
   }];
 
-  // let hasCustomAssemblyFormat = 1;
+  let hasCustomAssemblyFormat = 1;
   // let skipDefaultBuilders = 1;
 }
 
@@ -140,6 +140,22 @@ def CallOp : Puzzle_Op<"stencil_call"> {
   //   $callee `(` $inputs `)` attr-dict `:` functional-type($inputs, results)
   // }];
 }
+
+def SaveOp: Puzzle_Op<"save", [Terminator, HasParent<"func::FuncOp">]> {
+  let summary = "puzzle save operation";
+  let description = [{
+    grid -> grid
+  }];
+
+  let arguments = (ins
+    Puzzle_Grid:$input,
+    Puzzle_Grid:$output);
+
+  let results = (outs);
+  // let assemblyFormat
+  // let hasVerifier = 1;
+}
+
 
 
 #endif

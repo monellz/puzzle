@@ -1,5 +1,4 @@
 #include "Puzzle/PuzzleDialect.h"
-#include "Puzzle/PuzzleOps.h"
 
 using namespace mlir;
 using namespace mlir::puzzle;
@@ -11,6 +10,7 @@ void PuzzleDialect::initialize() {
 #define GET_OP_LIST
 #include "Puzzle/PuzzleOps.cpp.inc"
       >();
+  addTypes<GridType>();
 }
 
 Type PuzzleDialect::parseType(DialectAsmParser &parser) const { return detail::parseType(parser); }

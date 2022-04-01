@@ -13,6 +13,7 @@ add_llvm_executable(puzzle-translate
   dsl/context.cpp
   dsl/analyst.cpp
 )
+message(STATUS "dialect_libs: ${dialect_libs}")
 llvm_update_compile_flags(puzzle-translate)
 target_link_libraries(puzzle-translate
   PRIVATE

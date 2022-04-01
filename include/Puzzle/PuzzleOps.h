@@ -7,6 +7,8 @@
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 #include "mlir/IR/FunctionInterfaces.h"
 #include "mlir/IR/SymbolTable.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 
 #include "Puzzle/PuzzleTypes.h"
 

@@ -10,6 +10,11 @@ def Puzzle_Dialect : Dialect {
       a dialect for stencil.
   }];
   let cppNamespace = "::mlir::puzzle";
+  let dependentDialects = [
+    "::mlir::func::FuncDialect",
+    "::mlir::arith::ArithmeticDialect",
+    "::mlir::cf::ControlFlowDialect",
+  ];
   let extraClassDeclaration = [{
     void printType(Type, DialectAsmPrinter &) const override;
     Type parseType(DialectAsmParser &parser) const override;

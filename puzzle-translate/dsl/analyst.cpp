@@ -66,6 +66,9 @@ void Analyst::work(Module *m) {
     }
 
     // dbg(call_order);
+    for (auto stencil : call_order[kident]) {
+      stencil_rank[stencil] = kinfo.rank;
+    }
   }
 }
 
@@ -87,6 +90,7 @@ void Analyst::analyze(Stencil *s) {
 }
 void Analyst::analyze(Kernel *k) {
   auto &info = kernel_info[k->ident];
+  info.rank = k->rank;
   for (auto &i : k->infos) {
     llvm::TypeSwitch<Info *>(i.get())
         .Case<In>([&](In *in) { info.in = in->idents; })
@@ -119,11 +123,13 @@ void Analyst::analyze(Block *b) {
 }
 
 void Analyst::analyze(If *i) {
+  current_if_stack.push_back(i);
   analyze(i->cond.get());
   analyze(i->on_true.get());
   if (i->on_false) {
     analyze(i->on_false.get());
   }
+  current_if_stack.pop_back();
 }
 
 void Analyst::analyze(Assign *a) {
@@ -132,6 +138,11 @@ void Analyst::analyze(Assign *a) {
   std::string str = std::string(a->ident) + vec_str(a->index);
   current_value.insert(str);
   analyze(a->rhs.get());
+
+  if (current_if_stack.size() > 0) {
+    // 现在在一个if之中
+    if_info[current_if_stack.back()].phi_ident.insert(a->ident);
+  }
 }
 
 void Analyst::analyze(FloatLit *f) {}

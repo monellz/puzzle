@@ -88,7 +88,7 @@ rhs = [
 lhs = 'KernelDecl'
 ty = 'std::unique_ptr<Decl>'
 rhs = [
-  { rhs = ['Ident', 'Assign', 'Kernel', 'LBrc', 'InfoList', 'RBrc', 'Semi'], act = 'auto __k = std::make_unique<Kernel>(_1.piece, std::move(_5)); __k->update_loc(lexer); __ = std::move(__k);'},
+  { rhs = ['Ident', 'Assign', 'Kernel', 'Lt', 'IntLit', 'Gt', 'LBrc', 'InfoList', 'RBrc', 'Semi'], act = 'auto __k = std::make_unique<Kernel>(_1.piece, to_dec(_5.piece), std::move(_8)); __k->update_loc(lexer); __ = std::move(__k);'},
 ]
 
 [[production]]

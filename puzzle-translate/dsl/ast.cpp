@@ -60,7 +60,7 @@ public:
 
   void dump(Kernel *k) {
     Indent indent(cur_level, output);
-    output << "Kernel { ident: " << k->ident << " } " << loc(k) << "\n";
+    output << "Kernel { ident: " << k->ident << ", rank: " << k->rank << " } " << loc(k) << "\n";
     for (auto &i : k->infos) {
       dump(i.get());
     }

@@ -200,9 +200,10 @@ struct Bound : public Info {
 struct Kernel : public Decl {
   DEF_CLASSOF(Decl, p->kind == Decl::kKernel)
   std::string_view ident;
+  size_t rank;
   std::vector<std::unique_ptr<Info>> infos;
-  Kernel(std::string_view ident, std::vector<std::unique_ptr<Info>> infos)
-      : Decl(Decl::kKernel), ident(ident), infos(std::move(infos)) {}
+  Kernel(std::string_view ident, size_t rank, std::vector<std::unique_ptr<Info>> infos)
+      : Decl(Decl::kKernel), ident(ident), rank(rank), infos(std::move(infos)) {}
   ~Kernel() {}
 };
 
