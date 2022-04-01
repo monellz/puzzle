@@ -39,6 +39,7 @@ public:
 
   static GridType get(mlir::Type elementType, llvm::ArrayRef<int64_t> shape);
   static GridType get(mlir::Type elementType, size_t rank);
+  static llvm::StringRef getName() { return "grid"; }
 
   mlir::Type getElementType() const;
   size_t getRank() const;

@@ -20,7 +20,7 @@ GridType GridType::get(Type elementType, size_t rank) {
 namespace detail {
 void printType(Type type, AsmPrinter &printer) {
   if (auto grid = type.dyn_cast<GridType>()) {
-    printer << "grid<";
+    printer << GridType::getName() << "<";
     for (auto r : grid.getShape()) {
       if (r == GridType::kDynamicDimension) {
         printer << "?";
@@ -35,7 +35,36 @@ void printType(Type type, AsmPrinter &printer) {
   printer.printType(type);
 }
 
-Type parseType(DialectAsmParser &parser) { llvm_unreachable("unimplement for parse puzzle type"); }
+Type parseType(DialectAsmParser &parser) {
+  llvm::StringRef prefix;
+  // Parse the prefix
+  if (parser.parseKeyword(&prefix)) {
+    parser.emitError(parser.getNameLoc(), "expected type identifier");
+    return Type();
+  }
+
+  if (prefix == GridType::getName()) {
+    // Parse the shape
+    SmallVector<int64_t, 3> shape;
+    if (parser.parseLess() || parser.parseDimensionList(shape)) {
+      parser.emitError(parser.getNameLoc(), "expected valid dimension list");
+      return Type();
+    }
+
+    // Parse the element type
+    Type elementType;
+    if (parser.parseType(elementType) || parser.parseGreater()) {
+      parser.emitError(parser.getNameLoc(), "expected valid element type");
+      return Type();
+    }
+
+    // Return the Stencil type
+    return GridType::get(elementType, shape);
+  }
+
+  parser.emitError(parser.getNameLoc(), "unknown puzzle type ") << parser.getFullSymbolSpec();
+  return Type();
+}
 } // namespace detail
 
 } // namespace mlir::puzzle
