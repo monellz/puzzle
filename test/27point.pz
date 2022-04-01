@@ -1,0 +1,83 @@
+ALPHA_ZZZ = 0.9415;
+ALPHA_NZZ = 0.01531;
+ALPHA_PZZ = 0.02345;
+ALPHA_ZNZ = -0.01334;
+ALPHA_ZPZ = -0.03512;
+ALPHA_ZZN = 0.02333;
+ALPHA_ZZP = 0.02111;
+ALPHA_NNZ = -0.03154;
+ALPHA_PNZ = -0.01234;
+ALPHA_NPZ = 0.01111;
+ALPHA_PPZ = 0.02222;
+ALPHA_NZN = 0.01212;
+ALPHA_PZN = 0.01313;
+ALPHA_NZP = -0.01242;
+ALPHA_PZP = -0.03751;
+ALPHA_ZNN = -0.03548;
+ALPHA_ZPN = -0.04214;
+ALPHA_ZNP = 0.01795;
+ALPHA_ZPP = 0.01279;
+ALPHA_NNN = 0.01537;
+ALPHA_PNN = -0.01357;
+ALPHA_NPN = -0.01734;
+ALPHA_PPN = 0.01975;
+ALPHA_NNP = 0.02568;
+ALPHA_PNP = 0.02734;
+ALPHA_NPP = -0.01242;
+ALPHA_PPP = -0.02018;
+
+
+twentyseven_point = stencil {
+  output[0, 0, 0] = ALPHA_ZZZ * input[0, 0, 0]
+                  + ALPHA_NZZ * input[-1, 0, 0]
+                  + ALPHA_PZZ * input[1, 0, 0]
+                  + ALPHA_ZNZ * input[0, -1, 0]
+                  + ALPHA_ZPZ * input[0, 1, 0]
+                  + ALPHA_ZZN * input[0, 0, -1]
+                  + ALPHA_ZZP * input[0, 0, 1]
+                  + ALPHA_NNZ * input[-1, -1, 0]
+                  + ALPHA_PNZ * input[1, -1, 0]
+                  + ALPHA_NPZ * input[-1, 1, 0]
+                  + ALPHA_PPZ * input[1, 1, 0]
+                  + ALPHA_NZN * input[-1, 0, -1]
+                  + ALPHA_PZN * input[1, 0, -1]
+                  + ALPHA_NZP * input[-1, 0, 1]
+                  + ALPHA_PZP * input[1, 0, 1]
+                  + ALPHA_ZNN * input[0, -1, -1]
+                  + ALPHA_ZPN * input[0, 1, -1]
+                  + ALPHA_ZNP * input[0, -1, 1]
+                  + ALPHA_ZPP * input[0, 1, 1]
+                  + ALPHA_NNN * input[-1, -1, -1]
+                  + ALPHA_PNN * input[1, -1, -1]
+                  + ALPHA_NPN * input[-1, 1, -1]
+                  + ALPHA_PPN * input[1, 1, -1]
+                  + ALPHA_NNP * input[-1, -1, 1]
+                  + ALPHA_PNP * input[1, -1, 1]
+                  + ALPHA_NPP * input[-1, 1, 1]
+                  + ALPHA_PPP * input[1, 1, 1];
+};
+
+twentyseven_point_1 = kernel<3> {
+  In: input;
+  Out: output;
+  Pad: 1;
+  Iter: 100;
+  Bound: [0, 0, 0] -> [256, 256, 256];
+};
+
+
+twentyseven_point_2 = kernel<3> {
+  In: input;
+  Out: output;
+  Pad: 1;
+  Iter: 100;
+  Bound: [0, 0, 0] -> [384, 384, 384];
+};
+
+twentyseven_point_3 = kernel<3> {
+  In: input;
+  Out: output;
+  Pad: 1;
+  Iter: 100;
+  Bound: [0, 0, 0] -> [512, 512, 512];
+};
