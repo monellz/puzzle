@@ -7,37 +7,62 @@ include "mlir/Interfaces/SideEffectInterfaces.td"
 include "mlir/IR/FunctionInterfaces.td"
 include "mlir/IR/SymbolInterfaces.td"
 
-def Puzzle_FooOp : Puzzle_Op<"foo", [NoSideEffect,
-                                             SameOperandsAndResultType]> {
-    let summary = "Illustrates how to define an operation.";
-    let description = [{
-        The `standalone.foo` operation illustrates how to define a new
-        operation in a dialect. It uses an operation trait to declare that it
-        has no side effects.
+def LoadOp: Puzzle_Op<"load", [NoSideEffect]>{
+  let summary = "puzzle load operation";
+  let description = [{
+    grid -> f32/f64
+  }];
 
-        This operation takes an integer argument and returns an integer.
+  let arguments = (ins Puzzle_Grid:$grid, I64ArrayAttr:$index);
+  let results = (outs Puzzle_Element:$res);
 
-        Example:
+  let builders = [
+    OpBuilder<(ins "Value":$grid, "ArrayRef<int64_t>":$index), [{
+      $_state.addOperands(grid);
+      $_state.addAttribute(getIndexAttrName(), $_builder.getI64ArrayAttr(index));
+      auto grid_type = grid.getType().cast<GridType>();
+      $_state.addTypes(grid_type.getElementType());
+    }]>
+  ];
 
-        ```mlir
-        %0 = arith.constant 2 : i32
-        // Apply the foo operation to %0
-        %1 = standalone.foo %0 : i32
-        ```
-    }];
+  let extraClassDeclaration = [{
+    static StringRef getIndexAttrName() { return "index"; }
+  }];
 
-    let arguments = (ins I32:$input);
-    let results = (outs I32:$res);
-
-    let assemblyFormat = [{
-        $input attr-dict `:` type($input)
-    }];
+  //let assemblyFormat
+  //let hasVerifier = 1;
 }
+
+def StoreOp: Puzzle_Op<"store", [NoSideEffect]> {
+  let summary = "puzzle store operation";
+  let description = [{
+    f32/f64 -> grid
+  }];
+
+  let arguments = (ins Puzzle_Element:$val, I64ArrayAttr:$index);
+  let results = (outs Puzzle_Grid:$res);
+
+  let builders = [
+    OpBuilder<(ins "Value":$val, "ArrayRef<int64_t>":$index), [{
+      $_state.addOperands(val);
+      $_state.addAttribute(getIndexAttrName(), $_builder.getI64ArrayAttr(index));
+      $_state.addTypes(GridType::get(val.getType(), index.size()));
+    }]>
+  ];
+
+  let extraClassDeclaration = [{
+    static StringRef getIndexAttrName() { return "index"; }
+  }];
+
+  //let assemblyFormat
+  //let hasVerifier = 1;
+}
+
 
 def Puzzle_StencilOp : Puzzle_Op<"stencil", [
     FunctionOpInterface, IsolatedFromAbove, Symbol
   ]> {
-  let summary = "stencil operation";
+  let summary = "puzzle stencil operation";
   let description = [{
     Example:
 
@@ -55,10 +80,12 @@ def Puzzle_StencilOp : Puzzle_Op<"stencil", [
   );
   let regions = (region AnyRegion:$body);
 
-  let builders = [OpBuilder<(ins
-    "StringRef":$name, "FunctionType":$type,
-    CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs)
+  let builders = [
+    OpBuilder<(ins "StringRef":$name, "FunctionType":$type, CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs), [{
+      buildWithEntryBlock($_builder, $_state, name, type, attrs, type.getInputs());
+    }]
   >];
+
   let extraClassDeclaration = [{
     //===------------------------------------------------------------------===//
     // FunctionOpInterface Methods
@@ -71,10 +98,22 @@ def Puzzle_StencilOp : Puzzle_Op<"stencil", [
     /// Returns the result types of this function.
     ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
   }];
+
   // let hasCustomAssemblyFormat = 1;
   // let skipDefaultBuilders = 1;
 }
 
+def ReturnOp: Puzzle_Op<"return", [NoSideEffect, Terminator, HasParent<"StencilOp">]> {
+  let summary = "puzzle return";
+  let description = [{
+    return
+  }];
+
+  let arguments = (ins Puzzle_Grid:$res);
+
+  //let assemblyFormat
+  //let hasVerifier = 1;
+}
 
 
 #endif

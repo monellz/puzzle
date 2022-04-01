@@ -8,6 +8,8 @@
 #include "mlir/IR/FunctionInterfaces.h"
 #include "mlir/IR/SymbolTable.h"
 
+#include "Puzzle/PuzzleTypes.h"
+
 #define GET_OP_CLASSES
 #include "Puzzle/PuzzleOps.h.inc"
 
