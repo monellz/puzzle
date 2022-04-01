@@ -29,7 +29,9 @@ def LoadOp: Puzzle_Op<"load", [NoSideEffect]>{
     static StringRef getIndexAttrName() { return "index"; }
   }];
 
-  //let assemblyFormat
+  let assemblyFormat = [{
+    $grid $index attr-dict-with-keyword `:` type($grid) `->` type($res)
+  }];
   //let hasVerifier = 1;
 }
 
@@ -54,7 +56,9 @@ def StoreOp: Puzzle_Op<"store", [NoSideEffect]> {
     static StringRef getIndexAttrName() { return "index"; }
   }];
 
-  //let assemblyFormat
+  let assemblyFormat = [{
+    $val attr-dict-with-keyword `:` type($val) `->` type($res) $index
+  }];
   //let hasVerifier = 1;
 }
 
@@ -111,7 +115,9 @@ def ReturnOp: Puzzle_Op<"return", [NoSideEffect, Terminator, HasParent<"StencilO
 
   let arguments = (ins Puzzle_Grid:$res);
 
-  //let assemblyFormat
+  let assemblyFormat = [{
+    $res attr-dict-with-keyword `:` type($res)
+  }];
   //let hasVerifier = 1;
 }
 
@@ -122,7 +128,7 @@ def CallOp : Puzzle_Op<"stencil_call"> {
   }];
 
   let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<Puzzle_Grid>:$inputs);
-  let results = (outs Puzzle_Grid);
+  let results = (outs Puzzle_Grid:$result);
 
   let builders = [
     OpBuilder<(ins "StringRef":$callee, "ArrayRef<Value>":$arguments), [{
@@ -136,9 +142,9 @@ def CallOp : Puzzle_Op<"stencil_call"> {
     }]>
   ];
 
-  // let assemblyFormat = [{
-  //   $callee `(` $inputs `)` attr-dict `:` functional-type($inputs, results)
-  // }];
+  let assemblyFormat = [{
+    $callee `(` $inputs `)` attr-dict-with-keyword `:` functional-type($inputs, $result)
+  }];
 }
 
 def SaveOp: Puzzle_Op<"save", [Terminator, HasParent<"func::FuncOp">]> {
@@ -152,7 +158,10 @@ def SaveOp: Puzzle_Op<"save", [Terminator, HasParent<"func::FuncOp">]> {
     Puzzle_Grid:$output);
 
   let results = (outs);
-  // let assemblyFormat
+
+  let assemblyFormat = [{
+    $input `to` $output attr-dict-with-keyword `:` type($input) `to` type($output)
+  }];
   // let hasVerifier = 1;
 }
 
