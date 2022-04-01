@@ -2,13 +2,15 @@
 #define __PUZZLE_TYPES_H
 
 #include "mlir/IR/Types.h"
+#include "mlir/IR/DialectImplementation.h"
+
 #include "llvm/ADT/ArrayRef.h"
 
 namespace mlir::puzzle {
 
 namespace detail {
 struct GridTypeStorage;
-}
+} // namespace detail
 
 class GridType : public mlir::Type::TypeBase<GridType, mlir::Type, detail::GridTypeStorage> {
 public:
@@ -21,7 +23,13 @@ public:
 
   mlir::Type getElementType() const;
   size_t getRank() const;
+  llvm::ArrayRef<int64_t> getShape() const;
 };
+
+namespace detail {
+Type parseType(DialectAsmParser &parser);
+void printType(Type type, AsmPrinter &printer);
+} // namespace detail
 
 } // namespace mlir::puzzle
 

@@ -4,12 +4,16 @@
 include "mlir/IR/OpBase.td"
 
 def Puzzle_Dialect : Dialect {
-    let name = "puzzle";
-    let summary = "a dialect for stencil";
-    let description = [{
-        a dialect for stencil.
-    }];
-    let cppNamespace = "::mlir::puzzle";
+  let name = "puzzle";
+  let summary = "a dialect for stencil";
+  let description = [{
+      a dialect for stencil.
+  }];
+  let cppNamespace = "::mlir::puzzle";
+  let extraClassDeclaration = [{
+    void printType(Type, DialectAsmPrinter &) const override;
+    Type parseType(DialectAsmParser &parser) const override;
+  }];
 }
 
 def Puzzle_IsGridType : CPred<"$_self.isa<::mlir::puzzle::GridType>()">;

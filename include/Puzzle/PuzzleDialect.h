@@ -7,6 +7,7 @@
 #include "mlir/Interfaces/CallInterfaces.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 
+#include "Puzzle/PuzzleTypes.h"
 #include "Puzzle/PuzzleOpsDialect.h.inc"
 
 #endif
