@@ -83,8 +83,8 @@ def Puzzle_StencilOp : Puzzle_Op<"stencil", [
   let builders = [
     OpBuilder<(ins "StringRef":$name, "FunctionType":$type, CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs), [{
       buildWithEntryBlock($_builder, $_state, name, type, attrs, type.getInputs());
-    }]
-  >];
+    }]>
+  ];
 
   let extraClassDeclaration = [{
     //===------------------------------------------------------------------===//
@@ -113,6 +113,32 @@ def ReturnOp: Puzzle_Op<"return", [NoSideEffect, Terminator, HasParent<"StencilO
 
   //let assemblyFormat
   //let hasVerifier = 1;
+}
+
+def CallOp : Puzzle_Op<"stencil_call"> {
+  let summary = "puzzle stencil call operation";
+  let description = [{
+    call a stencil function
+  }];
+
+  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<Puzzle_Grid>:$inputs);
+  let results = (outs Puzzle_Grid);
+
+  let builders = [
+    OpBuilder<(ins "StringRef":$callee, "ArrayRef<Value>":$arguments), [{
+      assert(arguments.size() > 0);
+      // 所有参数的rank应当相同
+      size_t rank = arguments[0].getType().cast<GridType>().getRank();
+      Type element_type = arguments[0].getType().cast<GridType>().getElementType();
+      $_state.addTypes(GridType::get(element_type, rank));
+      $_state.addOperands(arguments);
+      $_state.addAttribute("callee", mlir::SymbolRefAttr::get($_builder.getContext(), callee));
+    }]>
+  ];
+
+  // let assemblyFormat = [{
+  //   $callee `(` $inputs `)` attr-dict `:` functional-type($inputs, results)
+  // }];
 }
 
 
