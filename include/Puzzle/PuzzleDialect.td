@@ -12,6 +12,13 @@ def Puzzle_Dialect : Dialect {
     let cppNamespace = "::mlir::puzzle";
 }
 
+def Puzzle_IsGridType : CPred<"$_self.isa<::mlir::puzzle::GridType>()">;
+
+def Puzzle_Element: AnyTypeOf<[F32, F64]>;
+def Puzzle_Grid : Type<Puzzle_IsGridType, "a grid">;
+
+
+
 class Puzzle_Op<string mnemonic, list<Trait> traits = []> :
         Op<Puzzle_Dialect, mnemonic, traits>;
 

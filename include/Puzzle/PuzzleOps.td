@@ -77,5 +77,4 @@ def Puzzle_StencilOp : Puzzle_Op<"stencil", [
 
 
 
-
 #endif
