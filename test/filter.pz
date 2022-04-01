@@ -7,14 +7,20 @@ laplacian = stencil {
 
 // phi, lap -> flx
 diffusive_flux_x = stencil {
+  /*
   flx[0, 0] = lap[1, 0] - lap[0, 0];
   if (flx[0, 0] * (phi[1, 0] - phi[0, 0]) > 0.0) flx[0, 0] = 0.0;
+  */
+  flx[0, 0] = ((lap[1, 0] - lap[0, 0]) * (phi[1, 0] - phi[0, 0]) > 0.0)? 0.0 : (lap[1, 0] - lap[0, 0]);
 };
 
 // phi, lap -> fly
 diffusive_flux_y = stencil {
+  /*
   fly[0, 0] = lap[0, 1] - lap[0, 0];
   if (fly[0, 0] * (phi[0, 1] - phi[0, 0]) > 0.0) fly[0, 0] = 0.0;
+  */
+  fly[0, 0] = ((lap[0, 1] - lap[0, 0]) * (phi[0, 1] - phi[0, 0]) > 0.0)? 0.0 : (lap[0, 1] - lap[0, 0]);
 };
 
 // phi, alpha, flx, fly -> result

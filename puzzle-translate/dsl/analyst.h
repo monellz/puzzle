@@ -54,6 +54,7 @@ private:
   void analyze(If *i);
   void analyze(Assign *a);
   void analyze(FloatLit *f);
+  void analyze(Select *s);
   void analyze(Access *a);
   void analyze(Binary *b);
 };

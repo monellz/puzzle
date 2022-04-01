@@ -207,7 +207,7 @@ void DSLContext::translate(Assign *a) {
 Value DSLContext::translate(Expr *e) {
   Value result;
   llvm::TypeSwitch<Expr *>(e)
-      .Case<Binary, Access, FloatLit>([&](auto *node) { result = this->translate(node); })
+      .Case<Binary, Access, FloatLit, Select>([&](auto *node) { result = this->translate(node); })
       .Default([&](Expr *) { llvm_unreachable("unknown expr type"); });
 
   return result;
@@ -273,6 +273,18 @@ Value DSLContext::translate(Binary *b) {
   }
 
   return ret;
+}
+
+Value DSLContext::translate(Select *s) {
+  Value cond = translate(s->cond.get());
+  Value on_true = translate(s->on_true.get());
+  Value on_false = translate(s->on_false.get());
+
+  Type element_type = on_true.getType();
+
+  arith::SelectOp op = builder.create<arith::SelectOp>(loc(s->loc), element_type, cond, on_true, on_false);
+
+  return op.getResult();
 }
 
 Value DSLContext::translate(Access *a) {

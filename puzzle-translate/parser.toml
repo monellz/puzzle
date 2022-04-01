@@ -13,6 +13,10 @@ priority = [
   { assoc = 'no_assoc', terms = ['RPar'] },
   { assoc = 'left', terms = ['Empty'] },
   { assoc = 'left', terms = ['Else'] },
+
+  # 可能有问题
+  { assoc = 'left', terms = ['Colon'] },
+  # { assoc = 'left', terms = ['Ques'] },
 ]
 
 start = 'Module'
@@ -46,6 +50,7 @@ start = 'Module'
 ':' = 'Colon'
 ';' = 'Semi' # short for semicolon
 '!' = 'Not'
+'\?' = 'Ques'
 '\(' = 'LPar' # short for parenthesis
 '\)' = 'RPar'
 '\[' = 'LBrk' # short for bracket
@@ -194,6 +199,7 @@ rhs = [
   { rhs = ['Expr', 'Ne', 'Expr'], act = 'auto __e = std::make_unique<Binary>(Expr::kNe, std::move(_1), std::move(_3)); __e->update_loc(lexer); __ = std::move(__e);' },
   { rhs = ['Expr', 'And', 'Expr'], act ='auto __e = std::make_unique<Binary>(Expr::kAnd,std::move(_1), std::move(_3)); __e->update_loc(lexer); __ = std::move(__e);' },
   { rhs = ['Expr', 'Or', 'Expr'], act = 'auto __e = std::make_unique<Binary>(Expr::kOr, std::move(_1), std::move(_3)); __e->update_loc(lexer); __ = std::move(__e);' },
+  { rhs = ['LPar', 'Expr', 'RPar', 'Ques', 'Expr', 'Colon', 'Expr'], act = 'auto __e = std::make_unique<Select>(std::move(_2), std::move(_5), std::move(_7)); __e->update_loc(lexer); __ = std::move(__e);' },
   { rhs = ['Add', 'Expr'], act = 'auto __e = std::move(_2); __e->update_loc(lexer); __ = std::move(__e);', prec = 'Unary' },
   { rhs = ['Sub', 'Expr'], act = 'auto __e = std::make_unique<Binary>(Expr::kSub, FloatLit::ZERO(), std::move(_2)); __e->update_loc(lexer); __ = std::move(__e);', prec = 'Unary' },
   { rhs = ['Not', 'Expr'], act = 'auto __e = std::make_unique<Binary>(Expr::kEq, FloatLit::ZERO(), std::move(_2)); __e->update_loc(lexer); __ = std::move(__e);', prec = 'Unary' },

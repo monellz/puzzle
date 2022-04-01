@@ -50,7 +50,7 @@ struct Location {
 };
 
 struct Expr {
-  enum Kind { kAdd, kSub, kMul, kDiv, kMod, kLt, kLe, kGe, kGt, kEq, kNe, kAnd, kOr, kAccess, kFloatLit };
+  enum Kind { kAdd, kSub, kMul, kDiv, kMod, kLt, kLe, kGe, kGt, kEq, kNe, kAnd, kOr, kAccess, kFloatLit, kSelect };
   Kind kind;
   explicit Expr(Kind kind) : kind(kind) {}
   virtual ~Expr() {}
@@ -87,6 +87,16 @@ struct FloatLit : Expr {
     auto z = std::make_unique<FloatLit>(0.0);
     return z;
   }
+};
+
+struct Select : public Expr {
+  DEF_CLASSOF(Expr, p->kind == Expr::kSelect)
+  std::unique_ptr<Expr> cond;
+  std::unique_ptr<Expr> on_true;
+  std::unique_ptr<Expr> on_false;
+  Select(std::unique_ptr<Expr> cond, std::unique_ptr<Expr> on_true, std::unique_ptr<Expr> on_false)
+      : Expr(Expr::kSelect), cond(std::move(cond)), on_true(std::move(on_true)), on_false(std::move(on_false)) {}
+  ~Select() {}
 };
 
 struct Stmt {

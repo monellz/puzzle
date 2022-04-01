@@ -50,6 +50,7 @@ private:
   Value translate(Binary *);
   Value translate(Access *);
   Value translate(FloatLit *);
+  Value translate(Select *);
 
   mlir::Location loc(const dsl::Location &l) {
     return mlir::FileLineColLoc::get(builder.getStringAttr(l.fn), l.line, l.col);

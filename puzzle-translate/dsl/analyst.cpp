@@ -111,9 +111,9 @@ void Analyst::analyze(Stmt *s) {
 }
 
 void Analyst::analyze(Expr *e) {
-  llvm::TypeSwitch<Expr *>(e).Case<Binary, Access, FloatLit>([&](auto *node) { analyze(node); }).Default([&](Expr *) {
-    llvm_unreachable("unknown stmt type");
-  });
+  llvm::TypeSwitch<Expr *>(e)
+      .Case<Binary, Access, FloatLit, Select>([&](auto *node) { analyze(node); })
+      .Default([&](Expr *) { llvm_unreachable("unknown stmt type"); });
 }
 
 void Analyst::analyze(Block *b) {
@@ -146,6 +146,12 @@ void Analyst::analyze(Assign *a) {
 }
 
 void Analyst::analyze(FloatLit *f) {}
+
+void Analyst::analyze(Select *f) {
+  analyze(f->cond.get());
+  analyze(f->on_true.get());
+  analyze(f->on_false.get());
+}
 
 void Analyst::analyze(Access *a) {
   if (a->index.size() > 0) {

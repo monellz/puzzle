@@ -138,7 +138,7 @@ public:
 
   void dump(Expr *e) {
     llvm::TypeSwitch<Expr *>(e)
-        .Case<Binary, Access, FloatLit>([&](auto *node) { this->dump(node); })
+        .Case<Binary, Access, FloatLit, Select>([&](auto *node) { this->dump(node); })
         .Default([&](Expr *) { llvm_unreachable("unknown expr type"); });
   }
 
@@ -205,6 +205,14 @@ public:
   void dump(FloatLit *f) {
     Indent indent(cur_level, output);
     output << "FloatLit { val: " << f->val << " } " << loc(f) << "\n";
+  }
+
+  void dump(Select *s) {
+    Indent indent(cur_level, output);
+    output << "Select { cond / on_true / on_false } " << loc(s) << "\n";
+    dump(s->cond.get());
+    dump(s->on_true.get());
+    dump(s->on_false.get());
   }
 
   int cur_level;
