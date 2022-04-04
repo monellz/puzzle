@@ -83,6 +83,7 @@ void DSLContext::translate(Stencil *s) {
   llvm::SmallVector<mlir::NamedAttribute, 1> func_attrs;
   func_attrs.push_back(builder.getNamedAttr("rank", builder.getIndexAttr(rank)));
   StencilFuncOp stencil_op = builder.create<StencilFuncOp>(loc(s->loc), s->ident, func_type, func_attrs);
+  stencil_op.setPrivate();
   mlir::Block *entry_block = &stencil_op.front();
   size_t _i = 0;
   for (auto in_ident : analyst.stencil_in[s->ident]) {
@@ -104,6 +105,7 @@ void DSLContext::translate(Stencil *s) {
   // dbg(out_ident);
   assert(symbol_table.count(out_ident) == 1);
   builder.create<ReturnOp>(loc(s->loc), symbol_table.lookup(*analyst.stencil_out[s->ident].begin()));
+
   // dbg("stencil done");
 }
 
