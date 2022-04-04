@@ -1,0 +1,5 @@
+set(LLVM_TARGET_DEFINITIONS Passes.td)
+mlir_tablegen(Passes.h.inc -gen-pass-decls -name Puzzle)
+add_public_tablegen_target(MLIRPuzzleTransformsIncGen)
+add_dependencies(mlir-headers MLIRPuzzleTransformsIncGen)
+add_mlir_doc(Passes PuzzlePasses ./ -gen-pass-doc)

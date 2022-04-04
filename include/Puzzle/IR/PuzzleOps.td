@@ -8,7 +8,7 @@ include "mlir/Interfaces/SideEffectInterfaces.td"
 include "mlir/IR/FunctionInterfaces.td"
 include "mlir/IR/SymbolInterfaces.td"
 
-def LoadOp: Puzzle_Op<"load", [NoSideEffect]>{
+def Puzzle_LoadOp: Puzzle_Op<"load", [NoSideEffect]>{
   let summary = "puzzle load operation";
   let description = [{
     grid -> f32/f64
@@ -36,7 +36,7 @@ def LoadOp: Puzzle_Op<"load", [NoSideEffect]>{
   //let hasVerifier = 1;
 }
 
-def StoreOp: Puzzle_Op<"store", [NoSideEffect]> {
+def Puzzle_StoreOp: Puzzle_Op<"store", [NoSideEffect]> {
   let summary = "puzzle store operation";
   let description = [{
     f32/f64 -> grid
@@ -64,7 +64,7 @@ def StoreOp: Puzzle_Op<"store", [NoSideEffect]> {
 }
 
 
-def Puzzle_StencilFuncOp : Puzzle_Op<"stencil_func", [
+def Puzzle_StencilOp : Puzzle_Op<"stencil", [
     DeclareOpInterfaceMethods<CallableOpInterface>,
     FunctionOpInterface, IsolatedFromAbove, Symbol,
   ]> {
@@ -130,9 +130,16 @@ def Puzzle_ApplyOp : Puzzle_Op<"apply", [
       $_state.addTypes(res_types);
     }]>
   ];
+
+  let extraClassDeclaration = [{
+    Block *getBody() { return &region().front(); }
+  }];
+
+  let skipDefaultBuilders = 1;
+  let hasCustomAssemblyFormat = 1;
 }
 
-def ReturnOp: Puzzle_Op<"return", [NoSideEffect, Terminator, ParentOneOf<["StencilFuncOp", "ApplyOp"]>]> {
+def Puzzle_ReturnOp: Puzzle_Op<"return", [NoSideEffect, Terminator, ParentOneOf<["StencilOp", "ApplyOp"]>]> {
   let summary = "puzzle return";
   let description = [{
     return
@@ -146,7 +153,7 @@ def ReturnOp: Puzzle_Op<"return", [NoSideEffect, Terminator, ParentOneOf<["Stenc
   //let hasVerifier = 1;
 }
 
-def CallOp : Puzzle_Op<"stencil_call", [DeclareOpInterfaceMethods<CallOpInterface>]> {
+def Puzzle_CallOp : Puzzle_Op<"call", [DeclareOpInterfaceMethods<CallOpInterface>]> {
   let summary = "puzzle stencil call operation";
   let description = [{
     call a stencil function
@@ -172,7 +179,7 @@ def CallOp : Puzzle_Op<"stencil_call", [DeclareOpInterfaceMethods<CallOpInterfac
   }];
 }
 
-def SaveOp: Puzzle_Op<"save", [Terminator, HasParent<"func::FuncOp">]> {
+def Puzzle_SaveOp: Puzzle_Op<"save", [Terminator, HasParent<"func::FuncOp">]> {
   let summary = "puzzle save operation";
   let description = [{
     grid -> grid

@@ -74,7 +74,7 @@ void DSLContext::translate(Stencil *s) {
   // stencil之内只有一个scope，没有变量定义，所有等号左边都只能是 grid_ident[0, 0, 0]
   llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> stencil_scope(symbol_table);
   builder.setInsertionPointToEnd(mlir_module.getBody());
-  // 用puzzle::StencilFuncOp构造stencil
+  // 用puzzle::StencilOp构造stencil
   size_t rank = analyst.stencil_rank[s->ident];
   mlir::Type element_type = DEFAULT_ELEMENT_TYPE;
   llvm::SmallVector<mlir::Type, 4> arg_types(analyst.stencil_in[s->ident].size(), GridType::get(element_type, rank));
@@ -82,30 +82,45 @@ void DSLContext::translate(Stencil *s) {
   auto func_type = builder.getFunctionType(arg_types, GridType::get(element_type, rank));
   llvm::SmallVector<mlir::NamedAttribute, 1> func_attrs;
   func_attrs.push_back(builder.getNamedAttr("rank", builder.getIndexAttr(rank)));
-  StencilFuncOp stencil_op = builder.create<StencilFuncOp>(loc(s->loc), s->ident, func_type, func_attrs);
+  StencilOp stencil_op = builder.create<StencilOp>(loc(s->loc), s->ident, func_type, func_attrs);
   stencil_op.setPrivate();
   mlir::Block *entry_block = &stencil_op.front();
+  /*
   size_t _i = 0;
   for (auto in_ident : analyst.stencil_in[s->ident]) {
     symbol_table.insert(in_ident, entry_block->getArgument((unsigned)_i));
     ++_i;
   }
+  */
 
   // 进入body
   builder.setInsertionPointToStart(entry_block);
+
+  // 生成一个applyOp
+  assert(analyst.stencil_out[s->ident].size() == 1);
+  ApplyOp apply_op =
+      builder.create<ApplyOp>(loc(s->loc), GridType::get(element_type, rank), entry_block->getArguments());
+  size_t _i = 0;
+  for (auto in_ident : analyst.stencil_in[s->ident]) {
+    symbol_table.insert(in_ident, apply_op->getRegion(0).front().getArgument((unsigned)_i));
+    ++_i;
+  }
+
+  builder.setInsertionPointToStart(&apply_op->getRegion(0).front());
   // stencil里的block不开辟新的scope
   for (auto &inner_s : s->body->stmts) {
     translate(inner_s.get());
   }
   // dbg(s->ident);
   // dbg(analyst.stencil_out[s->ident]);
-
   // 最后是一条ReturnOp
   auto out_ident = *analyst.stencil_out[s->ident].begin();
   // dbg(out_ident);
   assert(symbol_table.count(out_ident) == 1);
   builder.create<ReturnOp>(loc(s->loc), symbol_table.lookup(*analyst.stencil_out[s->ident].begin()));
 
+  builder.setInsertionPointToEnd(entry_block);
+  builder.create<ReturnOp>(loc(s->loc), apply_op.getResults());
   // dbg("stencil done");
 }
 
