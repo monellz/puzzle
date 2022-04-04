@@ -74,7 +74,7 @@ void DSLContext::translate(Stencil *s) {
   // stencil之内只有一个scope，没有变量定义，所有等号左边都只能是 grid_ident[0, 0, 0]
   llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> stencil_scope(symbol_table);
   builder.setInsertionPointToEnd(mlir_module.getBody());
-  // 用puzzle::StencilOp构造stencil
+  // 用puzzle::StencilFuncOp构造stencil
   size_t rank = analyst.stencil_rank[s->ident];
   mlir::Type element_type = DEFAULT_ELEMENT_TYPE;
   llvm::SmallVector<mlir::Type, 4> arg_types(analyst.stencil_in[s->ident].size(), GridType::get(element_type, rank));
@@ -82,19 +82,7 @@ void DSLContext::translate(Stencil *s) {
   auto func_type = builder.getFunctionType(arg_types, GridType::get(element_type, rank));
   llvm::SmallVector<mlir::NamedAttribute, 1> func_attrs;
   func_attrs.push_back(builder.getNamedAttr("rank", builder.getIndexAttr(rank)));
-  StencilOp stencil_op = builder.create<StencilOp>(loc(s->loc), s->ident, func_type, func_attrs);
-  /*
-  mlir::Block *entry_block = builder.createBlock(&stencil_op.getOperation()->getRegion(0));
-
-  // entry block
-  llvm::SmallVector<mlir::Location, 4> arg_locs(arg_types.size(), loc(s->loc));
-  entry_block->addArguments(arg_types, arg_locs);
-  size_t _i = 0;
-  for (auto in_ident: analyst.stencil_in[s->ident]) {
-    symbol_table.insert(in_ident, entry_block->getArgument((unsigned)_i));
-    ++_i;
-  }
-  */
+  StencilFuncOp stencil_op = builder.create<StencilFuncOp>(loc(s->loc), s->ident, func_type, func_attrs);
   mlir::Block *entry_block = &stencil_op.front();
   size_t _i = 0;
   for (auto in_ident : analyst.stencil_in[s->ident]) {

@@ -3,6 +3,7 @@
 
 include "Puzzle/PuzzleDialect.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
+include "mlir/Interfaces/CallInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 include "mlir/IR/FunctionInterfaces.td"
 include "mlir/IR/SymbolInterfaces.td"
@@ -63,10 +64,11 @@ def StoreOp: Puzzle_Op<"store", [NoSideEffect]> {
 }
 
 
-def Puzzle_StencilOp : Puzzle_Op<"stencil", [
-    FunctionOpInterface, IsolatedFromAbove, Symbol
+def Puzzle_StencilFuncOp : Puzzle_Op<"stencil_func", [
+    DeclareOpInterfaceMethods<CallableOpInterface>,
+    FunctionOpInterface, IsolatedFromAbove, Symbol,
   ]> {
-  let summary = "puzzle stencil operation";
+  let summary = "puzzle stencil function operation";
   let description = [{
     Example:
 
@@ -91,29 +93,52 @@ def Puzzle_StencilOp : Puzzle_Op<"stencil", [
   ];
 
   let extraClassDeclaration = [{
-    //===------------------------------------------------------------------===//
-    // FunctionOpInterface Methods
-    //===------------------------------------------------------------------===//
+    // FunctionOpInterface methods
     FunctionType getFunctionType() { return function_type(); }
-
-    /// Returns the argument types of this function.
     ArrayRef<Type> getArgumentTypes() { return getFunctionType().getInputs(); }
-
-    /// Returns the result types of this function.
     ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
   }];
 
   let hasCustomAssemblyFormat = 1;
-  // let skipDefaultBuilders = 1;
+  let skipDefaultBuilders = 1;
 }
 
-def ReturnOp: Puzzle_Op<"return", [NoSideEffect, Terminator, HasParent<"StencilOp">]> {
+def Puzzle_ApplyOp : Puzzle_Op<"apply", [
+    IsolatedFromAbove, NoSideEffect
+  ]> {
+
+  let summary = "puzzle apply operation";
+  let description = [{
+    puzzle.apply
+  }];
+
+  let arguments = (ins Variadic<Puzzle_Grid>:$operands);
+  let results = (outs Variadic<Puzzle_Grid>:$res);
+  let regions = (region SizedRegion<1>:$region);
+
+  let builders = [
+    OpBuilder<(ins "TypeRange":$res_types, "ValueRange":$operands), [{
+      // 这个builder主要是为了在这里构造region和block
+      $_state.addOperands(operands);
+      auto region = $_state.addRegion();
+      region->push_back(new Block());
+      llvm::SmallVector<mlir::Location> locs;
+      for (auto v: operands) {
+        locs.push_back(v.getLoc());
+      }
+      region->front().addArguments(operands.getTypes(), locs);
+      $_state.addTypes(res_types);
+    }]>
+  ];
+}
+
+def ReturnOp: Puzzle_Op<"return", [NoSideEffect, Terminator, ParentOneOf<["StencilFuncOp", "ApplyOp"]>]> {
   let summary = "puzzle return";
   let description = [{
     return
   }];
 
-  let arguments = (ins Puzzle_Grid:$res);
+  let arguments = (ins Variadic<Puzzle_Grid>:$res);
 
   let assemblyFormat = [{
     $res attr-dict-with-keyword `:` type($res)
@@ -121,7 +146,7 @@ def ReturnOp: Puzzle_Op<"return", [NoSideEffect, Terminator, HasParent<"StencilO
   //let hasVerifier = 1;
 }
 
-def CallOp : Puzzle_Op<"stencil_call"> {
+def CallOp : Puzzle_Op<"stencil_call", [DeclareOpInterfaceMethods<CallOpInterface>]> {
   let summary = "puzzle stencil call operation";
   let description = [{
     call a stencil function

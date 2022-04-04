@@ -9,14 +9,22 @@
 
 namespace mlir::puzzle {
 
-void StencilOp::print(OpAsmPrinter &p) { function_interface_impl::printFunctionOp(p, *this, /*isVariadic=*/false); }
-
-ParseResult StencilOp::parse(OpAsmParser &parser, OperationState &result) {
+// StencilFuncOp
+void StencilFuncOp::print(OpAsmPrinter &p) { function_interface_impl::printFunctionOp(p, *this, /*isVariadic=*/false); }
+ParseResult StencilFuncOp::parse(OpAsmParser &parser, OperationState &result) {
   auto buildFuncType = [](Builder &builder, ArrayRef<Type> argTypes, ArrayRef<Type> results,
                           function_interface_impl::VariadicFlag,
                           std::string &) { return builder.getFunctionType(argTypes, results); };
 
   return function_interface_impl::parseFunctionOp(parser, result, /*allowVariadic=*/false, buildFuncType);
 }
+// CallableOpInterface methods
+mlir::Region *StencilFuncOp::getCallableRegion() { return &getBody(); }
+llvm::ArrayRef<mlir::Type> StencilFuncOp::getCallableResults() { return getFunctionType().getResults(); }
+
+// CallOp
+// CallOpInterface methods
+CallInterfaceCallable CallOp::getCallableForCallee() { return (*this)->getAttrOfType<SymbolRefAttr>("callee"); }
+Operation::operand_range CallOp::getArgOperands() { return inputs(); }
 
 } // namespace mlir::puzzle
