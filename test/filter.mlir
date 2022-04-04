@@ -83,5 +83,6 @@ module {
     %2 = puzzle.call @diffusive_flux_x(%arg0, %0) : (!puzzle.grid<?x?xf64>, !puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64>
     %3 = puzzle.call @flux_divergence(%1, %2, %arg0, %arg1) : (!puzzle.grid<?x?xf64>, !puzzle.grid<?x?xf64>, !puzzle.grid<?x?xf64>, !puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64>
     puzzle.save %3 to %arg2 : !puzzle.grid<?x?xf64> to !puzzle.grid<?x?xf64>
+    return
   }
 }

@@ -179,7 +179,7 @@ def Puzzle_CallOp : Puzzle_Op<"call", [DeclareOpInterfaceMethods<CallOpInterface
   }];
 }
 
-def Puzzle_SaveOp: Puzzle_Op<"save", [Terminator, HasParent<"func::FuncOp">]> {
+def Puzzle_SaveOp: Puzzle_Op<"save", [HasParent<"func::FuncOp">]> {
   let summary = "puzzle save operation";
   let description = [{
     grid -> grid

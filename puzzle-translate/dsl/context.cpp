@@ -22,11 +22,11 @@ void DSLContext::translate(Kernel *k) {
   // 用func::FuncOp构造kernel
   mlir::Type element_type = DEFAULT_ELEMENT_TYPE;
   auto &kernel_info = analyst.kernel_info[k->ident];
-  assert(kernel_info.out.size() == 1);
-  llvm::SmallVector<mlir::Type, 4> arg_types(kernel_info.in.size() + 1, GridType::get(element_type, k->rank));
+  llvm::SmallVector<mlir::Type, 10> arg_types(kernel_info.in.size() + kernel_info.out.size(),
+                                              GridType::get(element_type, k->rank));
   // kernel函数只有输入参数，没有输出参数
   auto func_type = builder.getFunctionType(arg_types, llvm::None);
-  llvm::SmallVector<mlir::NamedAttribute, 4> func_attrs;
+  llvm::SmallVector<mlir::NamedAttribute, 10> func_attrs;
   if (kernel_info.iter > 0) {
     func_attrs.push_back(builder.getNamedAttr("iter", builder.getI64IntegerAttr(kernel_info.iter)));
   }
@@ -49,7 +49,10 @@ void DSLContext::translate(Kernel *k) {
     auto in_ident = kernel_info.in[i];
     symbol_table.insert(in_ident, entry_block->getArgument((unsigned)i));
   }
-  Value final_result = entry_block->getArgument(kernel_info.in.size());
+  llvm::SmallVector<mlir::Value, 4> final_results;
+  for (size_t i = kernel_info.in.size(); i < kernel_info.in.size() + kernel_info.out.size(); ++i) {
+    final_results.push_back(entry_block->getArgument((unsigned)i));
+  }
   builder.setInsertionPointToStart(entry_block);
 
   // 按顺序调用stencil
@@ -66,7 +69,12 @@ void DSLContext::translate(Kernel *k) {
     symbol_table.insert(*analyst.stencil_out[stencil].begin(), result);
   }
 
-  builder.create<SaveOp>(loc(k->loc), symbol_table.lookup(kernel_info.out[0]), final_result);
+  assert(final_results.size() == kernel_info.out.size());
+  for (size_t i = 0; i < final_results.size(); ++i) {
+    builder.create<SaveOp>(loc(k->loc), symbol_table.lookup(kernel_info.out[i]), final_results[i]);
+  }
+
+  builder.create<func::ReturnOp>(loc(k->loc));
   // dbg("kernel_done");
 }
 
