@@ -10,8 +10,8 @@
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 
-#include "Puzzle/PuzzleOpsDialect.h.inc"
-#include "Puzzle/PuzzleOps.h"
-#include "Puzzle/PuzzleTypes.h"
+#include "Puzzle/IR/PuzzleOpsDialect.h.inc"
+#include "Puzzle/IR/PuzzleOps.h"
+#include "Puzzle/IR/PuzzleTypes.h"
 
 #endif

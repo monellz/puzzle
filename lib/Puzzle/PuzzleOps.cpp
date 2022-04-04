@@ -1,11 +1,11 @@
-#include "Puzzle/PuzzleOps.h"
+#include "Puzzle/IR/PuzzleOps.h"
+#include "Puzzle/IR/PuzzleDialect.h"
 
-#include "Puzzle/PuzzleDialect.h"
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/IR/FunctionImplementation.h"
 
 #define GET_OP_CLASSES
-#include "Puzzle/PuzzleOps.cpp.inc"
+#include "Puzzle/IR/PuzzleOps.cpp.inc"
 
 namespace mlir::puzzle {
 

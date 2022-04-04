@@ -10,9 +10,9 @@
 #include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 
-#include "Puzzle/PuzzleTypes.h"
+#include "Puzzle/IR/PuzzleTypes.h"
 
 #define GET_OP_CLASSES
-#include "Puzzle/PuzzleOps.h.inc"
+#include "Puzzle/IR/PuzzleOps.h.inc"
 
 #endif

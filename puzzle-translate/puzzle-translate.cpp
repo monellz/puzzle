@@ -15,7 +15,7 @@
 
 #include "dbg/dbg.h"
 
-#include "Puzzle/PuzzleDialect.h"
+#include "Puzzle/IR/PuzzleDialect.h"
 #include "puzzle-translate/dsl/ast.h"
 #include "puzzle-translate/dsl/parser.h"
 #include "puzzle-translate/dsl/context.h"

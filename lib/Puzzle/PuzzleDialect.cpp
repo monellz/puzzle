@@ -1,14 +1,14 @@
-#include "Puzzle/PuzzleDialect.h"
+#include "Puzzle/IR/PuzzleDialect.h"
 
 using namespace mlir;
 using namespace mlir::puzzle;
 
-#include "Puzzle/PuzzleOpsDialect.cpp.inc"
+#include "Puzzle/IR/PuzzleOpsDialect.cpp.inc"
 
 void PuzzleDialect::initialize() {
   addOperations<
 #define GET_OP_LIST
-#include "Puzzle/PuzzleOps.cpp.inc"
+#include "Puzzle/IR/PuzzleOps.cpp.inc"
       >();
   addTypes<GridType>();
 }

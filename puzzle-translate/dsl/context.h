@@ -11,9 +11,9 @@
 #include "puzzle-translate/dsl/ast.h"
 #include "puzzle-translate/dsl/analyst.h"
 
-#include "Puzzle/PuzzleDialect.h"
-#include "Puzzle/PuzzleOps.h"
-#include "Puzzle/PuzzleTypes.h"
+#include "Puzzle/IR/PuzzleDialect.h"
+#include "Puzzle/IR/PuzzleOps.h"
+#include "Puzzle/IR/PuzzleTypes.h"
 
 #include "dbg/dbg.h"
 

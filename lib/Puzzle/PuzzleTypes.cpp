@@ -1,4 +1,4 @@
-#include "Puzzle/PuzzleTypes.h"
+#include "Puzzle/IR/PuzzleTypes.h"
 
 namespace mlir::puzzle {
 

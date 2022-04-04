@@ -1,7 +1,7 @@
 #ifndef PUZZLE_OPS
 #define PUZZLE_OPS
 
-include "Puzzle/PuzzleDialect.td"
+include "Puzzle/IR/PuzzleDialect.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/CallInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"

@@ -1,4 +1,4 @@
-#include "Puzzle/PuzzleDialect.h"
+#include "Puzzle/IR/PuzzleDialect.h"
 #include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/IR/Dialect.h"
 #include "mlir/IR/MLIRContext.h"
