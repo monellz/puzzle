@@ -12,6 +12,8 @@
 
 #include "Puzzle/IR/PuzzleTypes.h"
 
+#include "Puzzle/IR/PuzzleOpInterfaces.h"
+
 #define GET_OP_CLASSES
 #include "Puzzle/IR/PuzzleOps.h.inc"
 

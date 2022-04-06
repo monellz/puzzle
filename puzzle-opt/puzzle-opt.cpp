@@ -17,7 +17,7 @@
 int main(int argc, char **argv) {
   mlir::registerAllPasses();
   // TODO: Register standalone passes here.
-  // mlir::puzzle::registerPuzzlePasses();
+  mlir::puzzle::registerPuzzlePasses();
 
   mlir::DialectRegistry registry;
   registry.insert<mlir::puzzle::PuzzleDialect, mlir::arith::ArithmeticDialect, mlir::func::FuncDialect>();
@@ -26,5 +26,5 @@ int main(int argc, char **argv) {
   // will be *parsed* by the tool, not the one generated
   registerAllDialects(registry);
 
-  return mlir::asMainReturnCode(mlir::MlirOptMain(argc, argv, "Puzzle optimizer driver\n", registry));
+  return mlir::asMainReturnCode(mlir::MlirOptMain(argc, argv, "Puzzle optimizer\n", registry));
 }

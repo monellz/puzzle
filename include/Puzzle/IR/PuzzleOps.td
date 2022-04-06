@@ -2,13 +2,19 @@
 #define PUZZLE_OPS
 
 include "Puzzle/IR/PuzzleDialect.td"
+include "Puzzle/IR/PuzzleOpInterfaces.td"
+
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/CallInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 include "mlir/IR/FunctionInterfaces.td"
 include "mlir/IR/SymbolInterfaces.td"
 
-def Puzzle_LoadOp: Puzzle_Op<"load", [NoSideEffect]>{
+def Puzzle_LoadOp: Puzzle_Op<"load", [
+    NoSideEffect,
+    DeclareOpInterfaceMethods<IndexInterface>,
+    DeclareOpInterfaceMethods<ShiftInterface>
+  ]> {
   let summary = "puzzle load operation";
   let description = [{
     grid -> f32/f64
@@ -36,13 +42,17 @@ def Puzzle_LoadOp: Puzzle_Op<"load", [NoSideEffect]>{
   //let hasVerifier = 1;
 }
 
-def Puzzle_StoreOp: Puzzle_Op<"store", [NoSideEffect]> {
+def Puzzle_StoreOp: Puzzle_Op<"store", [
+    NoSideEffect,
+    DeclareOpInterfaceMethods<IndexInterface>,
+    DeclareOpInterfaceMethods<ShiftInterface>
+  ]> {
   let summary = "puzzle store operation";
   let description = [{
     f32/f64 -> grid
   }];
 
-  let arguments = (ins Puzzle_Element:$val, I64ArrayAttr:$index);
+  let arguments = (ins Puzzle_Element:$operand, I64ArrayAttr:$index);
   let results = (outs Puzzle_Grid:$res);
 
   let builders = [
@@ -58,7 +68,7 @@ def Puzzle_StoreOp: Puzzle_Op<"store", [NoSideEffect]> {
   }];
 
   let assemblyFormat = [{
-    $val attr-dict-with-keyword `:` type($val) `->` type($res) $index
+    $operand attr-dict-with-keyword `:` type($operand) `->` type($res) $index
   }];
   //let hasVerifier = 1;
 }

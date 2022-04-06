@@ -5,10 +5,6 @@
 
 namespace mlir {
 
-namespace puzzle {
-class PuzzleDialect;
-}
-
 #define GEN_PASS_CLASSES
 #include "Puzzle/Transforms/Passes.h.inc"
 

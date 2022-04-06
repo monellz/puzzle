@@ -3,19 +3,12 @@
 
 include "mlir/Pass/PassBase.td"
 
-def StencilInline: Pass<"puzzle-stencil-inline", "func::FuncOp"> {
-  let summary = "inline a stencil op";
+def StencilFusion: Pass<"puzzle-stencil-fusion", "func::FuncOp"> {
+  let summary = "fusion stencil";
   let description = [{
-    inline a stencil op
+    fusion stencil
   }];
-
-  let constructor = "mlir::puzzle::createStencilInlinePass()";
-  /*
-  let dependentDialects = [
-    "puzzle::PuzzleDialect"
-  ];
-  */
-
+  let constructor = "mlir::puzzle::createStencilFusionPass()";
 }
 
 
