@@ -40,6 +40,8 @@ struct ShapeInferencePass : public ShapeInferenceBase<ShapeInferencePass> {
     auto element_type = f.getArgumentTypes()[0].cast<puzzle::GridType>().getElementType();
     auto new_grid_type = puzzle::GridType::get(element_type, shape);
     llvm::SmallVector<mlir::Type, 10> new_arg_types(f.getArguments().size(), new_grid_type);
+    llvm::transform(f.getArgumentTypes(), new_arg_types.begin(),
+                    [&](Type arg_type) { return arg_type.dyn_cast<puzzle::GridType>() ? new_grid_type : arg_type; });
     // 没有输出
     auto new_func_type = FunctionType::get(&getContext(), new_arg_types, llvm::None);
     f.setFunctionTypeAttr(TypeAttr::get(new_func_type));
