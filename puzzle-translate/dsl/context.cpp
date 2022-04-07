@@ -27,6 +27,7 @@ void DSLContext::translate(Kernel *k) {
   // kernel函数只有输入参数，没有输出参数
   auto func_type = builder.getFunctionType(arg_types, llvm::None);
   llvm::SmallVector<mlir::NamedAttribute, 10> func_attrs;
+  func_attrs.push_back(builder.getNamedAttr("rank", builder.getI64IntegerAttr(k->rank)));
   if (kernel_info.iter > 0) {
     func_attrs.push_back(builder.getNamedAttr("iter", builder.getI64IntegerAttr(kernel_info.iter)));
   }

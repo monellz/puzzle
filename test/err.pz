@@ -1,5 +1,0 @@
-diffusive_flux_x = stencil {
-  if (1) {
-    flx[0] = 0.0;
-  }
-};

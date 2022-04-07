@@ -133,7 +133,7 @@ module {
     }
     puzzle.return %0 : !puzzle.grid<?x?x?xf64>
   }
-  func @nh_p_grad(%arg0: !puzzle.grid<?x?x?xf64>, %arg1: !puzzle.grid<?x?x?xf64>, %arg2: !puzzle.grid<?x?x?xf64>, %arg3: !puzzle.grid<?x?x?xf64>, %arg4: !puzzle.grid<?x?x?xf64>, %arg5: !puzzle.grid<?x?x?xf64>, %arg6: !puzzle.grid<?x?x?xf64>, %arg7: !puzzle.grid<?x?x?xf64>, %arg8: !puzzle.grid<?x?x?xf64>, %arg9: !puzzle.grid<?x?x?xf64>) attributes {iter = 1 : i64, lb = [0 : index, 0 : index, 0 : index], pad = 4 : index, ub = [64 : index, 64 : index, 64 : index]} {
+  func @nh_p_grad(%arg0: !puzzle.grid<?x?x?xf64>, %arg1: !puzzle.grid<?x?x?xf64>, %arg2: !puzzle.grid<?x?x?xf64>, %arg3: !puzzle.grid<?x?x?xf64>, %arg4: !puzzle.grid<?x?x?xf64>, %arg5: !puzzle.grid<?x?x?xf64>, %arg6: !puzzle.grid<?x?x?xf64>, %arg7: !puzzle.grid<?x?x?xf64>, %arg8: !puzzle.grid<?x?x?xf64>, %arg9: !puzzle.grid<?x?x?xf64>) attributes {iter = 1 : i64, lb = [0 : index, 0 : index, 0 : index], pad = 4 : index, rank = 3 : i64, ub = [64 : index, 64 : index, 64 : index]} {
     %0 = puzzle.call @k1(%arg0) : (!puzzle.grid<?x?x?xf64>) -> !puzzle.grid<?x?x?xf64>
     %1 = puzzle.call @k4(%arg0, %0, %arg1) : (!puzzle.grid<?x?x?xf64>, !puzzle.grid<?x?x?xf64>, !puzzle.grid<?x?x?xf64>) -> !puzzle.grid<?x?x?xf64>
     %2 = puzzle.call @k2(%arg0, %0, %arg1) : (!puzzle.grid<?x?x?xf64>, !puzzle.grid<?x?x?xf64>, !puzzle.grid<?x?x?xf64>) -> !puzzle.grid<?x?x?xf64>

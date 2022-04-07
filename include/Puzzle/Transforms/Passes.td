@@ -11,5 +11,13 @@ def StencilFusion: Pass<"puzzle-stencil-fusion", "func::FuncOp"> {
   let constructor = "mlir::puzzle::createStencilFusionPass()";
 }
 
+def ShapeInference: Pass<"puzzle-shape-inference", "func::FuncOp"> {
+  let summary = "grid shape inference";
+  let description = [{
+    grid shape inference
+  }];
+  let constructor = "mlir::puzzle::createShapeInferencePass()";
+}
+
 
 #endif
