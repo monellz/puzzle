@@ -26,15 +26,11 @@ def Puzzle_LoadOp: Puzzle_Op<"load", [
   let builders = [
     OpBuilder<(ins "Value":$grid, "ArrayRef<int64_t>":$index), [{
       $_state.addOperands(grid);
-      $_state.addAttribute(getIndexAttrName(), $_builder.getI64ArrayAttr(index));
+      $_state.addAttribute("index", $_builder.getI64ArrayAttr(index));
       auto grid_type = grid.getType().cast<GridType>();
       $_state.addTypes(grid_type.getElementType());
     }]>
   ];
-
-  let extraClassDeclaration = [{
-    static StringRef getIndexAttrName() { return "index"; }
-  }];
 
   let assemblyFormat = [{
     $grid $index attr-dict-with-keyword `:` type($grid) `->` type($res)
@@ -52,25 +48,20 @@ def Puzzle_StoreOp: Puzzle_Op<"store", [
     f32/f64 -> grid
   }];
 
-  let arguments = (ins Puzzle_Element:$operand, I64ArrayAttr:$index);
+  let arguments = (ins Puzzle_Element:$elem, I64ArrayAttr:$index);
   let results = (outs Puzzle_Grid:$res);
 
   let builders = [
     OpBuilder<(ins "Value":$val, "ArrayRef<int64_t>":$index), [{
       $_state.addOperands(val);
-      $_state.addAttribute(getIndexAttrName(), $_builder.getI64ArrayAttr(index));
+      $_state.addAttribute("index", $_builder.getI64ArrayAttr(index));
       $_state.addTypes(GridType::get(val.getType(), index.size()));
     }]>
   ];
 
-  let extraClassDeclaration = [{
-    static StringRef getIndexAttrName() { return "index"; }
-  }];
-
   let assemblyFormat = [{
-    $operand attr-dict-with-keyword `:` type($operand) `->` type($res) $index
+    $elem attr-dict-with-keyword `:` type($elem) `->` type($res) $index
   }];
-  //let hasVerifier = 1;
 }
 
 
@@ -104,13 +95,13 @@ def Puzzle_StencilOp : Puzzle_Op<"stencil", [
 
   let extraClassDeclaration = [{
     // FunctionOpInterface methods
-    FunctionType getFunctionType() { return function_type(); }
     ArrayRef<Type> getArgumentTypes() { return getFunctionType().getInputs(); }
     ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
   }];
 
   let hasCustomAssemblyFormat = 1;
   let skipDefaultBuilders = 1;
+  // let hasVerifier = 1;
 }
 
 def Puzzle_ApplyOp : Puzzle_Op<"apply", [
@@ -142,7 +133,7 @@ def Puzzle_ApplyOp : Puzzle_Op<"apply", [
   ];
 
   let extraClassDeclaration = [{
-    Block *getBody() { return &region().front(); }
+    Block *getBody() { return &getRegion().front(); }
   }];
 
   let skipDefaultBuilders = 1;

@@ -11,60 +11,6 @@
 
 using namespace mlir;
 
-/*
-namespace {
-
-struct StencilConverter : public OpRewritePattern<puzzle::CallOp> {
-  using OpRewritePattern::OpRewritePattern;
-  LogicalResult matchAndRewrite(puzzle::CallOp op, PatternRewriter &rewriter) const final {
-    // 在stencilop里面添加一个applyop，便于后面直接inline
-    auto loc = op.getLoc();
-    // auto &entry_block = op.getBody().front();
-    // auto new_op = rewriter.create<func::ReturnOp>(loc);
-    rewriter.setInsertionPointToStart(entry_block);
-    puzzle::ApplyOp apply_op = rewriter.create<puzzle::ApplyOp>(loc,
-    entry_block->getTerminator()->getOperands().getTypes(), op.getArguments()); auto &dst_block =
-    apply_op.getBody().front(); rewriter.setInsertionPointToStart(dst_block); rewriter.updateRootInPlace(op, [&] { for
-    (Operation &op: entry_block.getOperations()) { if (dyn_cast<puzzle::ApplyOp>(op)) continue;
-
-        // move into
-      }
-    });
-    //auto parent_op = op->getBlock()->getParentOp();
-    //dbg(parent_op->getName().getStringRef());
-    //op->dump();
-    ///*
-    //mlir::Region *old_region = op.getBody();
-    //rewriter.replaceOpWithNewOp<puzzle::ApplyOp>(loc, op.getResult().getType(), op.getOperands(), old_region);
-    //dbg("replaced");
-    //op->dump();
-    return failure();
-  }
-};
-
-struct StencilInlinePass : public StencilInlineBase<StencilInlinePass> {
-  void runOnOperation() override {
-    dbg("start");
-    dbg(getOperation()->getName().getStringRef());
-
-    RewritePatternSet patterns(&getContext());
-    ConversionTarget target(getContext());
-
-    patterns.add<StencilConverter>(&getContext());
-
-    target.addLegalDialect<puzzle::PuzzleDialect>();
-    target.addIllegalOp<puzzle::CallOp>();
-
-    if (failed(applyPartialConversion(getOperation(), target, std::move(patterns)))) {
-      signalPassFailure();
-    }
-    dbg("end");
-  }
-};
-
-} // namespace
-*/
-
 namespace {
 
 struct StencilFusionPattern : public OpRewritePattern<puzzle::ApplyOp> {
@@ -123,13 +69,14 @@ struct StencilFusionPattern : public OpRewritePattern<puzzle::ApplyOp> {
   }
 };
 
+/*
 struct RerouteRewrite : public StencilFusionPattern {
   using StencilFusionPattern::StencilFusionPattern;
   LogicalResult redirectStore(puzzle::ApplyOp producer_op, puzzle::ApplyOp consumer_op,
                               PatternRewriter &rewriter) const {
     rewriter.setInsertionPointAfter(producer_op);
     puzzle::ApplyOp cloned_op = rewriter.cloneWithoutRegions(producer_op);
-    rewriter.inlineRegionBefore(producer_op.region(), cloned_op.region(), cloned_op.region().begin());
+    rewriter.inlineRegionBefore(producer_op.getRegion(), cloned_op.getRegion(), cloned_op.getRegion().begin());
 
     llvm::SmallVector<Value, 10> new_operands = consumer_op.getOperands();
     llvm::SmallVector<Type, 10> new_result_types(consumer_op.getResultTypes().begin(),
@@ -156,19 +103,18 @@ struct RerouteRewrite : public StencilFusionPattern {
   }
 
   LogicalResult matchAndRewrite(puzzle::ApplyOp op, PatternRewriter &rewriter) const final {
-    /*
-    for (auto operand: op.operands()) {
-      if (operand.getDefiningOp()) {
-        for (auto user: operand.getDefiningOp()->getUsers()) {
-          if (auto producer_op = dyn_cast<puzzle::ApplyOp>(user)) {
-            if (user == op.getOperation() || !user-i)
-          }
-        }
-      }
-    }
-    */
+    // for (auto operand: op.operands()) {
+    //   if (operand.getDefiningOp()) {
+    //     for (auto user: operand.getDefiningOp()->getUsers()) {
+    //       if (auto producer_op = dyn_cast<puzzle::ApplyOp>(user)) {
+    //         if (user == op.getOperation() || !user-i)
+    //       }
+    //     }
+    //   }
+    // }
   }
 };
+*/
 
 struct FusionRewrite : public StencilFusionPattern {
   using StencilFusionPattern::StencilFusionPattern;
@@ -201,14 +147,14 @@ struct FusionRewrite : public StencilFusionPattern {
 
     producer_op.walk([&](Operation *op) {
       if (auto store_op = dyn_cast<puzzle::StoreOp>(op)) {
-        rewriter.replaceOp(store_op, store_op.operand());
+        rewriter.replaceOp(store_op, store_op.getElem());
       }
     });
 
     // 遍历build op里面的每一个load，将其替换成计算（需要计算index偏移）
     build_op.walk([&](puzzle::LoadOp load_op) {
       // 只处理那些输入是producer输出的load op
-      if (replacement_index.count(load_op.grid()) != 0) {
+      if (replacement_index.count(load_op.getGrid()) != 0) {
         auto index = cast<puzzle::IndexInterface>(load_op.getOperation()).getIndex();
         auto cloned_producer_op = cast<puzzle::ApplyOp>(rewriter.clone(*producer_op));
         cloned_producer_op.walk([&](puzzle::ShiftInterface shift_op) { shift_op.shiftByIndex(index); });
@@ -220,7 +166,7 @@ struct FusionRewrite : public StencilFusionPattern {
 
         // 替换后面的load op为return的结果
         auto return_op = cast<puzzle::ReturnOp>(load_op.getOperation()->getPrevNode());
-        auto operand = return_op.getOperand(replacement_index[load_op.grid()]);
+        auto operand = return_op.getOperand(replacement_index[load_op.getGrid()]);
         rewriter.replaceOp(load_op, operand);
         rewriter.eraseOp(return_op);
       }

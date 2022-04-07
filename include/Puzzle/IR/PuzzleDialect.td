@@ -19,6 +19,8 @@ def Puzzle_Dialect : Dialect {
     void printType(Type, DialectAsmPrinter &) const override;
     Type parseType(DialectAsmParser &parser) const override;
   }];
+
+  let emitAccessorPrefix = kEmitAccessorPrefix_Prefixed;
 }
 
 def Puzzle_IsGridType : CPred<"$_self.isa<::mlir::puzzle::GridType>()">;

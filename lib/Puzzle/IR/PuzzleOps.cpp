@@ -25,7 +25,7 @@ llvm::ArrayRef<mlir::Type> StencilOp::getCallableResults() { return getFunctionT
 // CallOp
 // CallOpInterface methods
 CallInterfaceCallable CallOp::getCallableForCallee() { return (*this)->getAttrOfType<SymbolRefAttr>("callee"); }
-Operation::operand_range CallOp::getArgOperands() { return inputs(); }
+Operation::operand_range CallOp::getArgOperands() { return getInputs(); }
 
 ParseResult ApplyOp::parse(OpAsmParser &parser, OperationState &result) {
   SmallVector<OpAsmParser::UnresolvedOperand, 8> operands;
@@ -73,7 +73,7 @@ void ApplyOp::print(OpAsmPrinter &p) {
   // p << getOperationName() << ' ';
   //  Print the region arguments
   SmallVector<Value, 10> operands = getOperands();
-  if (!region().empty() && !operands.empty()) {
+  if (!getRegion().empty() && !operands.empty()) {
     Block *body = getBody();
     p << " (";
     llvm::interleaveComma(llvm::seq<int>(0, operands.size()), p, [&](int i) {
@@ -84,17 +84,17 @@ void ApplyOp::print(OpAsmPrinter &p) {
 
   // Print the result types
   p << "-> ";
-  if (res().size() > 1) {
+  if (getRes().size() > 1) {
     p << "(";
   }
-  llvm::interleaveComma(res().getTypes(), p);
-  if (res().size() > 1) {
+  llvm::interleaveComma(getRes().getTypes(), p);
+  if (getRes().size() > 1) {
     p << ")";
   }
 
   p << " ";
   // Print region, bounds, and return type
-  p.printRegion(region(), /*printEntryBlockArgs=*/false);
+  p.printRegion(getRegion(), /*printEntryBlockArgs=*/false);
 }
 
 } // namespace mlir::puzzle

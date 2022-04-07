@@ -5,8 +5,8 @@ PROJECT_DIR=$(dirname "${SCRIPT_DIR}")
 
 MLIR_DIR=/home/zhongrunxin/workspace/mlir/llvm-project/build/lib/cmake/mlir
 
+rm -rf ${PROJECT_DIR}/build/
 mkdir ${PROJECT_DIR}/build
-rm -rf ${PROJECT_DIR}/build/*
 cd ${PROJECT_DIR}/build
 
 cmake .. -DMLIR_DIR=${MLIR_DIR} -DCMAKE_BUILD_TYPE=Debug
