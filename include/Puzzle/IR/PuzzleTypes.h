@@ -44,6 +44,7 @@ public:
   mlir::Type getElementType() const;
   size_t getRank() const;
   llvm::ArrayRef<int64_t> getShape() const;
+  llvm::SmallVector<int64_t, 3> getMemRefShape() const;
 };
 
 namespace detail {

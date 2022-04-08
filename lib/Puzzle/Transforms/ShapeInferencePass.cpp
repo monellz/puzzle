@@ -52,20 +52,16 @@ struct ShapeInferencePass : public ShapeInferenceBase<ShapeInferencePass> {
     // 这里直接认为所有grid的shape都是一样的
     // FIXME?
     f.walk([&](mlir::Operation *op) {
-      if (auto apply_op = dyn_cast<puzzle::ApplyOp>(op)) {
-        // body 参数要和op参数一致
-        for (auto [arg_type, barg] : llvm::zip(apply_op.getOperands().getTypes(), apply_op.getBody()->getArguments())) {
-          barg.setType(arg_type);
+      for (auto operand : op->getOperands()) {
+        if (operand.getType().dyn_cast<puzzle::GridType>()) {
+          operand.setType(new_grid_type);
         }
-        for (auto arg : apply_op.getResults()) {
-          arg.setType(new_grid_type);
+      }
+
+      for (auto res : op->getResults()) {
+        if (res.getType().dyn_cast<puzzle::GridType>()) {
+          res.setType(new_grid_type);
         }
-      } else if (auto return_op = dyn_cast<puzzle::ReturnOp>(op)) {
-        for (auto arg : return_op.getOperands()) {
-          arg.setType(new_grid_type);
-        }
-      } else if (auto store_op = dyn_cast<puzzle::StoreOp>(op)) {
-        store_op.getResult().setType(new_grid_type);
       }
     });
   }

@@ -31,7 +31,7 @@ def TimeInsertion: Pass<"puzzle-time-insertion", "func::FuncOp"> {
   ];
 }
 
-def PuzzleToAffineLowering: Pass<"puzzle-to-affine-lowering", "func::FuncOp"> {
+def PuzzleToAffineLowering: Pass<"puzzle-to-affine-lowering", "ModuleOp"> {
   let summary = "puzzle to affine lowering";
   let description = [{
     puzzle to affine lowering

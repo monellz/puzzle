@@ -15,6 +15,7 @@ def Puzzle_Dialect : Dialect {
     "::mlir::arith::ArithmeticDialect",
     "::mlir::AffineDialect",
     "::mlir::cf::ControlFlowDialect",
+    "::mlir::memref::MemRefDialect",
   ];
   let extraClassDeclaration = [{
     void printType(Type, DialectAsmPrinter &) const override;

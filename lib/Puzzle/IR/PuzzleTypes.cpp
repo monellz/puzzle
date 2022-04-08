@@ -17,6 +17,18 @@ GridType GridType::get(Type elementType, size_t rank) {
   return GridType::get(elementType, shape);
 }
 
+llvm::SmallVector<int64_t, 3> GridType::getMemRefShape() const {
+  llvm::SmallVector<int64_t, 3> result;
+  for (auto size : llvm::reverse(getShape())) {
+    if (size == GridType::kDynamicDimension) {
+      result.push_back(ShapedType::kDynamicSize);
+    } else {
+      result.push_back(size);
+    }
+  }
+  return result;
+}
+
 namespace detail {
 void printType(Type type, AsmPrinter &printer) {
   if (auto grid = type.dyn_cast<GridType>()) {

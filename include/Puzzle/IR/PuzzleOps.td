@@ -206,14 +206,14 @@ def Puzzle_SwapOp: Puzzle_Op<"swap", [NoSideEffect]> {
   }];
 
   let arguments = (ins
-    Puzzle_Grid:$input_grid,
-    Puzzle_Grid:$output_grid,
+    AnyTypeOf<[Puzzle_Grid, F32MemRef, F64MemRef]>:$input_grid,
+    AnyTypeOf<[Puzzle_Grid, F32MemRef, F64MemRef]>:$output_grid,
     Index:$iter
   );
 
   let results = (outs
-    Puzzle_Grid:$new_input_grid,
-    Puzzle_Grid:$new_output_grid
+    AnyTypeOf<[Puzzle_Grid, F32MemRef, F64MemRef]>:$new_input_grid,
+    AnyTypeOf<[Puzzle_Grid, F32MemRef, F64MemRef]>:$new_output_grid
   );
 
   let assemblyFormat = [{

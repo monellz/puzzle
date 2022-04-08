@@ -94,10 +94,19 @@ struct TimeInsertionPattern : public OpRewritePattern<func::FuncOp> {
 };
 
 struct TimeInsertionPass : public TimeInsertionBase<TimeInsertionPass> {
-  bool isTimeInsertionPossible(func::FuncOp op) {
+  bool isTimeInsertionPossible(func::FuncOp op, std::string &errorMessage) {
     // 要求op只有两个grid参数，一个input，一个output
-    return op.getArgumentTypes().size() == 2 &&
-           llvm::all_of(op.getArgumentTypes(), [](Type t) { return t.dyn_cast<puzzle::GridType>(); });
+    if (op.getArgumentTypes().size() != 2) {
+      errorMessage = "argument number != 2";
+      return false;
+    }
+
+    if (!llvm::all_of(op.getArgumentTypes(), [](Type t) { return t.dyn_cast<puzzle::GridType>(); })) {
+      errorMessage = "not all arguments have grid type";
+      return false;
+    }
+
+    return true;
   }
   void runOnOperation() override {
     func::FuncOp f = getOperation();
@@ -108,9 +117,9 @@ struct TimeInsertionPass : public TimeInsertionBase<TimeInsertionPass> {
     Optional<NamedAttribute> iter_attr = attr_dict.getNamed("iter");
     assert(!iter_attr);
 
-    if (!isTimeInsertionPossible(f)) {
-      llvm::errs() << "Cannot do TimeInsertionPass"
-                   << "\n";
+    std::string errorMessage;
+    if (!isTimeInsertionPossible(f, errorMessage)) {
+      llvm::errs() << "Cannot do TimeInsertionPass: " << errorMessage << "\n";
       signalPassFailure();
       return;
     }

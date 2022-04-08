@@ -33,12 +33,12 @@ module {
     }
     puzzle.return %0 : !puzzle.grid<?x?x?xf64>
   }
-  func @seven_point_1(%arg0: !puzzle.grid<?x?x?xf64>, %arg1: !puzzle.grid<?x?x?xf64>) attributes {iter = 100 : i64, lb = [0 : index, 0 : index, 0 : index], pad = 1 : index, rank = 3 : i64, ub = [256 : index, 256 : index, 256 : index]} {
+  func @seven_point_1(%arg0: !puzzle.grid<?x?x?xf64>, %arg1: !puzzle.grid<?x?x?xf64>) attributes {lb = [0 : index, 0 : index, 0 : index], pad = 1 : index, rank = 3 : i64, ub = [256 : index, 256 : index, 256 : index]} {
     %0 = puzzle.call @seven_point(%arg0) : (!puzzle.grid<?x?x?xf64>) -> !puzzle.grid<?x?x?xf64>
     puzzle.save %0 to %arg1 : !puzzle.grid<?x?x?xf64> to !puzzle.grid<?x?x?xf64>
     return
   }
-  func @seven_point_2(%arg0: !puzzle.grid<?x?x?xf64>, %arg1: !puzzle.grid<?x?x?xf64>) attributes {iter = 100 : i64, lb = [0 : index, 0 : index, 0 : index], pad = 1 : index, rank = 3 : i64, ub = [384 : index, 384 : index, 384 : index]} {
+  func @seven_point_2(%arg0: !puzzle.grid<?x?x?xf64>, %arg1: !puzzle.grid<?x?x?xf64>) attributes {lb = [0 : index, 0 : index, 0 : index], pad = 1 : index, rank = 3 : i64, ub = [384 : index, 384 : index, 384 : index]} {
     %0 = puzzle.call @seven_point(%arg0) : (!puzzle.grid<?x?x?xf64>) -> !puzzle.grid<?x?x?xf64>
     puzzle.save %0 to %arg1 : !puzzle.grid<?x?x?xf64> to !puzzle.grid<?x?x?xf64>
     return

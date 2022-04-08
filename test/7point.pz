@@ -41,7 +41,7 @@ seven_point_1 = kernel<3> {
   In: input;
   Out: output;
   Pad: 1;
-  Iter: 100;
+  // Iter: 100;
   Bound: [0, 0, 0] -> [256, 256, 256];
 };
 
@@ -50,7 +50,7 @@ seven_point_2 = kernel<3> {
   In: input;
   Out: output;
   Pad: 1;
-  Iter: 100;
+  // Iter: 100;
   Bound: [0, 0, 0] -> [384, 384, 384];
 };
 
