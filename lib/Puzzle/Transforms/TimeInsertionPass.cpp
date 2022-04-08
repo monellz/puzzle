@@ -112,6 +112,7 @@ struct TimeInsertionPass : public TimeInsertionBase<TimeInsertionPass> {
       llvm::errs() << "Cannot do TimeInsertionPass"
                    << "\n";
       signalPassFailure();
+      return;
     }
 
     ConversionTarget target(getContext());
