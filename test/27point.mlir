@@ -123,7 +123,7 @@ module {
     puzzle.save %0 to %arg1 : !puzzle.grid<?x?x?xf64> to !puzzle.grid<?x?x?xf64>
     return
   }
-  func @twentyseven_point_3(%arg0: !puzzle.grid<?x?x?xf64>, %arg1: !puzzle.grid<?x?x?xf64>) attributes {iter = 100 : i64, lb = [0 : index, 0 : index, 0 : index], pad = 1 : index, rank = 3 : i64, ub = [512 : index, 512 : index, 512 : index]} {
+  func @twentyseven_point_3(%arg0: !puzzle.grid<?x?x?xf64>, %arg1: !puzzle.grid<?x?x?xf64>) attributes {lb = [0 : index, 0 : index, 0 : index], pad = 1 : index, rank = 3 : i64, ub = [512 : index, 512 : index, 512 : index]} {
     %0 = puzzle.call @twentyseven_point(%arg0) : (!puzzle.grid<?x?x?xf64>) -> !puzzle.grid<?x?x?xf64>
     puzzle.save %0 to %arg1 : !puzzle.grid<?x?x?xf64> to !puzzle.grid<?x?x?xf64>
     return

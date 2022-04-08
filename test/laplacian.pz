@@ -9,6 +9,6 @@ laplacian = kernel<2> {
   In: phi;
   Out: lap;
   Pad: 1;
-  Iter: 1;
+  // Iter: 1;
   Bound: [0, 0, 0] -> [64, 64, 64];
 };

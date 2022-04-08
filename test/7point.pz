@@ -58,6 +58,6 @@ seven_point_3 = kernel<3> {
   In: input;
   Out: output;
   Pad: 1;
-  Iter: 100;
+  // Iter: 100;
   Bound: [0, 0, 0] -> [512, 512, 512];
 };

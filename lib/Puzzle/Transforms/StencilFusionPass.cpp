@@ -2,7 +2,6 @@
 #include "Puzzle/IR/PuzzleOps.h"
 #include "Puzzle/IR/PuzzleTypes.h"
 
-#include "mlir/Transforms/DialectConversion.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 
 #include "dbg/dbg.h"

@@ -13,6 +13,7 @@ def Puzzle_Dialect : Dialect {
   let dependentDialects = [
     "::mlir::func::FuncDialect",
     "::mlir::arith::ArithmeticDialect",
+    "::mlir::AffineDialect",
     "::mlir::cf::ControlFlowDialect",
   ];
   let extraClassDeclaration = [{

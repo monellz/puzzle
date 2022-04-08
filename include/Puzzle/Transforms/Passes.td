@@ -19,5 +19,25 @@ def ShapeInference: Pass<"puzzle-shape-inference", "func::FuncOp"> {
   let constructor = "mlir::puzzle::createShapeInferencePass()";
 }
 
+def TimeInsertion: Pass<"puzzle-time-insertion", "func::FuncOp"> {
+  let summary = "time dim insertion";
+  let description = [{
+    time dim insertion
+  }];
+  let constructor = "mlir::puzzle::createTimeInsertionPass()";
+
+  let options = [
+    Option<"iteration", "iter", "int64_t", /*default*/"-1", "iteration time">
+  ];
+}
+
+def PuzzleToAffineLowering: Pass<"puzzle-to-affine-lowering", "func::FuncOp"> {
+  let summary = "puzzle to affine lowering";
+  let description = [{
+    puzzle to affine lowering
+  }];
+  let constructor = "mlir::puzzle::createPuzzleToAffineLoweringPass()";
+}
+
 
 #endif

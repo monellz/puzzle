@@ -20,7 +20,8 @@ int main(int argc, char **argv) {
   mlir::puzzle::registerPuzzlePasses();
 
   mlir::DialectRegistry registry;
-  registry.insert<mlir::puzzle::PuzzleDialect, mlir::arith::ArithmeticDialect, mlir::func::FuncDialect>();
+  registry.insert<mlir::puzzle::PuzzleDialect, mlir::AffineDialect, mlir::arith::ArithmeticDialect,
+                  mlir::func::FuncDialect>();
   // Add the following to include *all* MLIR Core dialects, or selectively
   // include what you need like above. You only need to register dialects that
   // will be *parsed* by the tool, not the one generated

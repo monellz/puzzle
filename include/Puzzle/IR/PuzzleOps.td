@@ -180,7 +180,7 @@ def Puzzle_CallOp : Puzzle_Op<"call", [DeclareOpInterfaceMethods<CallOpInterface
   }];
 }
 
-def Puzzle_SaveOp: Puzzle_Op<"save", [HasParent<"func::FuncOp">]> {
+def Puzzle_SaveOp: Puzzle_Op<"save"> {
   let summary = "puzzle save operation";
   let description = [{
     grid -> grid
@@ -196,6 +196,29 @@ def Puzzle_SaveOp: Puzzle_Op<"save", [HasParent<"func::FuncOp">]> {
     $input `to` $output attr-dict-with-keyword `:` type($input) `to` type($output)
   }];
   // let hasVerifier = 1;
+}
+
+// TODO: 添加traits
+def Puzzle_SwapOp: Puzzle_Op<"swap", [NoSideEffect]> {
+  let summary = "puzzle swap operation";
+  let description = [{
+    new_input_grid, new_output_grid = iter % 2 == 0? input_grid: output_grid
+  }];
+
+  let arguments = (ins
+    Puzzle_Grid:$input_grid,
+    Puzzle_Grid:$output_grid,
+    Index:$iter
+  );
+
+  let results = (outs
+    Puzzle_Grid:$new_input_grid,
+    Puzzle_Grid:$new_output_grid
+  );
+
+  let assemblyFormat = [{
+    $input_grid $output_grid `by` $iter attr-dict-with-keyword `:` type($input_grid) type($output_grid) `by` type($iter) `to` type($new_input_grid) type($new_output_grid)
+  }];
 }
 
 

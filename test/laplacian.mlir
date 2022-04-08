@@ -17,7 +17,7 @@ module {
     }
     puzzle.return %0 : !puzzle.grid<?x?xf64>
   }
-  func @laplacian(%arg0: !puzzle.grid<?x?xf64>, %arg1: !puzzle.grid<?x?xf64>) attributes {iter = 1 : i64, lb = [0 : index, 0 : index, 0 : index], pad = 1 : index, rank = 2 : i64, ub = [64 : index, 64 : index, 64 : index]} {
+  func @laplacian(%arg0: !puzzle.grid<?x?xf64>, %arg1: !puzzle.grid<?x?xf64>) attributes {lb = [0 : index, 0 : index, 0 : index], pad = 1 : index, rank = 2 : i64, ub = [64 : index, 64 : index, 64 : index]} {
     %0 = puzzle.call @laplacian_stencil(%arg0) : (!puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64>
     puzzle.save %0 to %arg1 : !puzzle.grid<?x?xf64> to !puzzle.grid<?x?xf64>
     return

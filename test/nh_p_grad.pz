@@ -37,5 +37,5 @@ nh_p_grad = kernel<3> {
   Out: uout, vout;
   Pad: 4;
   Bound: [0, 0, 0] -> [64, 64, 64];
-  Iter: 1;
+  // Iter: 1;
 };
