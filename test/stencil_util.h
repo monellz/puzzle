@@ -65,7 +65,7 @@ struct Square {
     }
     if (err_cnt <= 2 * Rank * sizes[0])
       return true;
-    std::err << "Err: " << err_cnt << std::endl;
+    std::cerr << "Err: " << err_cnt << std::endl;
     return false;
   }
 

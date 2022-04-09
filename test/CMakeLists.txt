@@ -64,7 +64,7 @@ foreach(cpp_file ${test_src})
   add_custom_target(${case_name}_o DEPENDS ${case_name}.o)
 
   add_custom_target(${case_name}_t
-    COMMAND ${LLVM_TOOLS_BINARY_DIR}/clang++ -O3 -std=c++17 ${cpp_file} ${case_name}.o -o ${case_name}.test -I${PROJECT_SOURCE_DIR}/3rdparty
+    COMMAND ${LLVM_TOOLS_BINARY_DIR}/clang++ -O3 -std=c++17 ${PROJECT_SOURCE_DIR}/test/${cpp_file} ${case_name}.o -o ${case_name}.test -I${PROJECT_SOURCE_DIR}/3rdparty
     DEPENDS ${case_name}_o
   )
 

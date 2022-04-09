@@ -72,6 +72,8 @@ clang++ -O3 filter -c filter.s -o filter.o
 
 需要注意，外部函数要用```extern "C"```包裹住，否则会因为c++的命名问题导致编译失败
 
+还有就是test文件夹下的cpp文件需要-std=c++17
+
 #### 关于函数定义
 
 目前puzzle最终的函数参数要么是memref type，要么是int64_t（时间维度）
