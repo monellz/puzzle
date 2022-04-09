@@ -8,122 +8,82 @@
 
 `puzzle-opt`处理MLIR内部的转换，即各个优化pass
 
-## 样例
+## 用法
 
-### DSL
+### DSL -> MLIR
 
-```c++
-// cat ./test/filter.pz
-lap_factor = 4.0;
+可以用```puzzle-translate -h```看到支持的操作
 
-// phi -> lap
-laplacian = stencil {
-  lap[0, 0] = phi[1, 0] + phi[-1, 0] + phi[0, 1] + phi[0, -1] - lap_factor * phi[0, 0];
-};
-
-// phi, lap -> flx
-diffusive_flux_x = stencil {
-  flx[0, 0] = ((lap[1, 0] - lap[0, 0]) * (phi[1, 0] - phi[0, 0]) > 0.0)? 0.0 : (lap[1, 0] - lap[0, 0]);
-};
-
-// phi, lap -> fly
-diffusive_flux_y = stencil {
-  fly[0, 0] = ((lap[0, 1] - lap[0, 0]) * (phi[0, 1] - phi[0, 0]) > 0.0)? 0.0 : (lap[0, 1] - lap[0, 0]);
-};
-
-// phi, alpha, flx, fly -> result
-flux_divergence = stencil {
-  result[0, 0] = phi[0, 0] - alpha[0, 0] * (flx[0, 0] - flx[-1, 0] + fly[0, 0] - fly[0, -1]);
-};
-
-
-filter = kernel<2> {
-  In: phi, alpha;
-  Out: result;
-  Pad: 2;
-  Iter: 1;
-  Bound: [0, 0] -> [64, 64];
-};
-
+```bash
+puzzle-translate filter.pz --dsl-to-mlir -o filter.mlir
 ```
 
-### MLIR
+### MLIR -> MLIR
 
-```c++
-// ./build/bin/puzzle-translate ./test/filter.pz --dsl-to-mlir
-module {
-  puzzle.stencil @laplacian(%arg0: !puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64> attributes {rank = 2 : index} {
-    %0 = puzzle.load %arg0 [1, 0] : !puzzle.grid<?x?xf64> -> f64
-    %1 = puzzle.load %arg0 [-1, 0] : !puzzle.grid<?x?xf64> -> f64
-    %2 = arith.addf %0, %1 : f64
-    %3 = puzzle.load %arg0 [0, 1] : !puzzle.grid<?x?xf64> -> f64
-    %4 = arith.addf %2, %3 : f64
-    %5 = puzzle.load %arg0 [0, -1] : !puzzle.grid<?x?xf64> -> f64
-    %6 = arith.addf %4, %5 : f64
-    %cst = arith.constant 4.000000e+00 : f64
-    %7 = puzzle.load %arg0 [0, 0] : !puzzle.grid<?x?xf64> -> f64
-    %8 = arith.mulf %cst, %7 : f64
-    %9 = arith.subf %6, %8 : f64
-    %10 = puzzle.store %9 : f64 -> !puzzle.grid<?x?xf64> [0, 0]
-    puzzle.return %10 : !puzzle.grid<?x?xf64>
-  }
-  puzzle.stencil @diffusive_flux_x(%arg0: !puzzle.grid<?x?xf64>, %arg1: !puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64> attributes {rank = 2 : index} {
-    %0 = puzzle.load %arg1 [1, 0] : !puzzle.grid<?x?xf64> -> f64
-    %1 = puzzle.load %arg1 [0, 0] : !puzzle.grid<?x?xf64> -> f64
-    %2 = arith.subf %0, %1 : f64
-    %3 = puzzle.load %arg0 [1, 0] : !puzzle.grid<?x?xf64> -> f64
-    %4 = puzzle.load %arg0 [0, 0] : !puzzle.grid<?x?xf64> -> f64
-    %5 = arith.subf %3, %4 : f64
-    %6 = arith.mulf %2, %5 : f64
-    %cst = arith.constant 0.000000e+00 : f64
-    %7 = arith.cmpf ogt, %6, %cst : f64
-    %cst_0 = arith.constant 0.000000e+00 : f64
-    %8 = puzzle.load %arg1 [1, 0] : !puzzle.grid<?x?xf64> -> f64
-    %9 = puzzle.load %arg1 [0, 0] : !puzzle.grid<?x?xf64> -> f64
-    %10 = arith.subf %8, %9 : f64
-    %11 = arith.select %7, %cst_0, %10 : f64
-    %12 = puzzle.store %11 : f64 -> !puzzle.grid<?x?xf64> [0, 0]
-    puzzle.return %12 : !puzzle.grid<?x?xf64>
-  }
-  puzzle.stencil @diffusive_flux_y(%arg0: !puzzle.grid<?x?xf64>, %arg1: !puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64> attributes {rank = 2 : index} {
-    %0 = puzzle.load %arg1 [0, 1] : !puzzle.grid<?x?xf64> -> f64
-    %1 = puzzle.load %arg1 [0, 0] : !puzzle.grid<?x?xf64> -> f64
-    %2 = arith.subf %0, %1 : f64
-    %3 = puzzle.load %arg0 [0, 1] : !puzzle.grid<?x?xf64> -> f64
-    %4 = puzzle.load %arg0 [0, 0] : !puzzle.grid<?x?xf64> -> f64
-    %5 = arith.subf %3, %4 : f64
-    %6 = arith.mulf %2, %5 : f64
-    %cst = arith.constant 0.000000e+00 : f64
-    %7 = arith.cmpf ogt, %6, %cst : f64
-    %cst_0 = arith.constant 0.000000e+00 : f64
-    %8 = puzzle.load %arg1 [0, 1] : !puzzle.grid<?x?xf64> -> f64
-    %9 = puzzle.load %arg1 [0, 0] : !puzzle.grid<?x?xf64> -> f64
-    %10 = arith.subf %8, %9 : f64
-    %11 = arith.select %7, %cst_0, %10 : f64
-    %12 = puzzle.store %11 : f64 -> !puzzle.grid<?x?xf64> [0, 0]
-    puzzle.return %12 : !puzzle.grid<?x?xf64>
-  }
-  puzzle.stencil @flux_divergence(%arg0: !puzzle.grid<?x?xf64>, %arg1: !puzzle.grid<?x?xf64>, %arg2: !puzzle.grid<?x?xf64>, %arg3: !puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64> attributes {rank = 2 : index} {
-    %0 = puzzle.load %arg2 [0, 0] : !puzzle.grid<?x?xf64> -> f64
-    %1 = puzzle.load %arg3 [0, 0] : !puzzle.grid<?x?xf64> -> f64
-    %2 = puzzle.load %arg1 [0, 0] : !puzzle.grid<?x?xf64> -> f64
-    %3 = puzzle.load %arg1 [-1, 0] : !puzzle.grid<?x?xf64> -> f64
-    %4 = arith.subf %2, %3 : f64
-    %5 = puzzle.load %arg0 [0, 0] : !puzzle.grid<?x?xf64> -> f64
-    %6 = arith.addf %4, %5 : f64
-    %7 = puzzle.load %arg0 [0, -1] : !puzzle.grid<?x?xf64> -> f64
-    %8 = arith.subf %6, %7 : f64
-    %9 = arith.mulf %1, %8 : f64
-    %10 = arith.subf %0, %9 : f64
-    %11 = puzzle.store %10 : f64 -> !puzzle.grid<?x?xf64> [0, 0]
-    puzzle.return %11 : !puzzle.grid<?x?xf64>
-  }
-  func @filter(%arg0: !puzzle.grid<?x?xf64>, %arg1: !puzzle.grid<?x?xf64>, %arg2: !puzzle.grid<?x?xf64>) attributes {iter = 1 : i64, lb = [0 : index, 0 : index], pad = 2 : index, ub = [64 : index, 64 : index]} {
-    %0 = puzzle.stencil_call @laplacian(%arg0) : (!puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64>
-    %1 = puzzle.stencil_call @diffusive_flux_y(%arg0, %0) : (!puzzle.grid<?x?xf64>, !puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64>
-    %2 = puzzle.stencil_call @diffusive_flux_x(%arg0, %0) : (!puzzle.grid<?x?xf64>, !puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64>
-    %3 = puzzle.stencil_call @flux_divergence(%1, %2, %arg0, %arg1) : (!puzzle.grid<?x?xf64>, !puzzle.grid<?x?xf64>, !puzzle.grid<?x?xf64>, !puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64>
-    puzzle.save %3 to %arg2 : !puzzle.grid<?x?xf64> to !puzzle.grid<?x?xf64>
-  }
-}
+使用puzzle-opt来apply各个pass
+
+用```puzzle-opt -h```看到各个pass，以puzzle为开头的是新的
+
+```bash
+# puzzle的pass有一定顺序要求
+# 必须先inline
+puzzle-opt filter.mlir --inline -o filter_inlined.mlir
+
+# 可以参考test/CMakeLists.txt看基本的pass
+# --cse不需要这么多
+puzzle-opt filter.mlir \
+  --inline \
+  --puzzle-stencil-fusion --cse \
+  --puzzle-to-affine-lowering --cse \
+  --puzzle-replace-alloc-with-param --cse \
+  # --puzzle-replace-alloc-with-param 是为了处理memref.allocop，将这些通过参数交给外部传递而不是内部alloc
+  --canonicalize \
+  # --canonicalize会进行一些常量折叠
+  # 后面的pass都是opt自带的convert pass
+  --lower-affine \
+  --convert-scf-to-cf \
+  --convert-memref-to-llvm \
+  --convert-func-to-llvm \
+  # 注意不能用--convert-arith-to-llvm 这个会出问题（有一些无法解决的cast，原因未知），用--convert-func-to-llvm作为最后的convert
+  --reconcile-unrealized-casts \
+  # 最后一步必须是这个（mlir目前的规范）
+  -o filter_llvm.mlir
+```
+
+最后生成使用llvm dialect的mlir
+
+### MLIR -> LLVM IR -> .o
+
+先用puzzle-translate转换成llvm ir
+
+```bash
+puzzle-translate filter_llvm.mlir  --mlir-to-llvmir -o filter.ll
+```
+
+然后调用llvm tools去生成最后的.o，需要注意的是这一系列步骤（.ll -> .o）必须使用同一个llvm build的tools，否则可能会出现问题
+
+```bash
+llvm-as filter.ll -o filter.bc
+llc -O3 filter.bc -o filter.s
+clang++ -O3 filter -c filter.s -o filter.o
+```
+
+到.o之后就clang++/g++都可以用了
+
+需要注意，外部函数要用```extern "C"```包裹住，否则会因为c++的命名问题导致编译失败
+
+#### 关于函数定义
+
+目前puzzle最终的函数参数要么是memref type，要么是int64_t（时间维度）
+
+每一个memref type会转换成如下参数，共```2 + 1 + rank * 2```个参数
+
+```bash
+MemRefType ->  pointer, aligned_pointer, offset, size[0], size[1], ..., size[rank - 1], stride[0], stride[1], ..., stride[rank - 1]
+
+其中offset size[i] stride[i]都是int64_t（可以看最后生成的.ll确定）
+
+pointer跟aligned_pointer的区别不太清楚，一般用不到aligned的attr，都设置同一个指针就行
+
+memref type的访问是 offset + i * stride[0] + j * stride[1] + k * stride[2]，size在mlir里用来给memref::DimOp的，例如一个<2x4x6xf64>的memref的size就是[2, 4, 6]，stride就是[4 * 6, 6, 1]，传入参数要与这个语义一致
 ```
