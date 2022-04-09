@@ -11,6 +11,7 @@ std::unique_ptr<Pass> createStencilFusionPass();
 std::unique_ptr<Pass> createShapeInferencePass();
 std::unique_ptr<Pass> createTimeInsertionPass();
 std::unique_ptr<Pass> createPuzzleToAffineLoweringPass();
+std::unique_ptr<Pass> createReplaceAllocWithParamPass();
 
 #define GEN_PASS_REGISTRATION
 #include "Puzzle/Transforms/Passes.h.inc"

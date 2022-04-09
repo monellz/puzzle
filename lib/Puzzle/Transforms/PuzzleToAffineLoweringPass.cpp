@@ -69,8 +69,16 @@ struct StoreSaveOpLowering : public InLoopLowering<puzzle::StoreOp> {
         break;
       } else if (auto apply_op = dyn_cast<puzzle::ApplyOp>(use_op)) {
         // 需要添加一个alloc
+        // alloc需要dim信息，需要添加对参数的dim
         rewriter.setInsertionPointToStart(&parent_func_op.getBody().front());
-        auto alloc_op = rewriter.create<memref::AllocOp>(op.getLoc(), memref_type);
+        SmallVector<Value, 4> dim_vals;
+        for (int i = 0; i < rank; ++i) {
+          auto index_op = rewriter.create<arith::ConstantOp>(op.getLoc(), rewriter.getIndexAttr(i));
+          auto dim_op = rewriter.create<memref::DimOp>(op.getLoc(), rewriter.getIndexType(),
+                                                       parent_func_op.getArgument(0), index_op.getResult());
+          dim_vals.push_back(dim_op.getResult());
+        }
+        auto alloc_op = rewriter.create<memref::AllocOp>(op.getLoc(), memref_type, dim_vals);
         // 替换所有use
         op.getRes().replaceAllUsesWith(alloc_op.getResult());
         rewriter.setInsertionPoint(op);

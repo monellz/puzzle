@@ -9,7 +9,8 @@ rm -rf ${PROJECT_DIR}/build/
 mkdir ${PROJECT_DIR}/build
 cd ${PROJECT_DIR}/build
 
-cmake .. -DMLIR_DIR=${MLIR_DIR} -DCMAKE_BUILD_TYPE=Debug
+cmake .. -DMLIR_DIR=${MLIR_DIR} -DCMAKE_BUILD_TYPE=Debug -DENABLE_TEST=ON
 #cmake .. -DMLIR_DIR=${MLIR_DIR} -DCMAKE_BUILD_TYPE=Release
 
 make -j$(nproc)
+make test

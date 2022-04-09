@@ -19,10 +19,16 @@
 #include "puzzle-translate/dsl/ast.h"
 #include "puzzle-translate/dsl/parser.h"
 #include "puzzle-translate/dsl/context.h"
+#include "puzzle-translate/header/codegen.h"
 
 namespace mlir::puzzle {
 void registerAllDialects(DialectRegistry &registry) {
-  registry.insert<func::FuncDialect, arith::ArithmeticDialect, cf::ControlFlowDialect, PuzzleDialect>();
+  // clang-format off
+  registry.insert<func::FuncDialect,
+                  arith::ArithmeticDialect,
+                  cf::ControlFlowDialect,
+                  PuzzleDialect>();
+  // clang-format on
 }
 
 void registerPuzzleTranslations() {
@@ -51,10 +57,15 @@ void registerPuzzleTranslations() {
     mlir::OwningOpRef<mlir::ModuleOp> module_ref = dsl_context.translateDSLToMLIR();
     return module_ref;
   });
+
+  TranslateFromMLIRRegistration mlir_to_header("mlir-to-header", [](ModuleOp module_op, llvm::raw_ostream &output) {
+    header::CodeGen codegen(module_op, output);
+    return codegen.translate();
+  });
 }
 
 mlir::LogicalResult puzzleTranslateMain(int argc, char **argv) {
-  // mlir::registerAllTranslations();
+  mlir::registerAllTranslations();
   registerPuzzleTranslations();
 
   mlir::DialectRegistry registry;

@@ -39,5 +39,13 @@ def PuzzleToAffineLowering: Pass<"puzzle-to-affine-lowering", "ModuleOp"> {
   let constructor = "mlir::puzzle::createPuzzleToAffineLoweringPass()";
 }
 
+def ReplaceAllocWithParam: Pass<"puzzle-replace-alloc-with-param", "func::FuncOp"> {
+  let summary = "replace memref.alloc with param";
+  let description = [{
+    replace memref with param
+  }];
+  let constructor = "mlir::puzzle::createReplaceAllocWithParamPass()";
+}
+
 
 #endif

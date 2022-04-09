@@ -12,6 +12,8 @@ add_llvm_executable(puzzle-translate
   dsl/parser.cpp
   dsl/context.cpp
   dsl/analyst.cpp
+
+  header/codegen.cpp
 )
 message(STATUS "dialect_libs: ${dialect_libs}")
 llvm_update_compile_flags(puzzle-translate)

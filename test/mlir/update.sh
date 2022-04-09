@@ -1,12 +1,12 @@
 #!/bin/bash
 set -x
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
-PROJECT_DIR=$(dirname "${SCRIPT_DIR}")
+PROJECT_DIR=$(dirname $(dirname "${SCRIPT_DIR}"))
 
-cd ${SCRIPT_DIR}
-PZ_FILES=$(find . -name "*.pz")
+PZ_FILES=$(find ${PROJECT_DIR}/test/example -name "*.pz")
 
 for f in ${PZ_FILES}; do
-  fn="${f%.*}"
+  fullfn="${f##*/}"
+  fn="${fullfn%.*}"
   ${PROJECT_DIR}/build/bin/puzzle-translate $f --dsl-to-mlir -o $fn.mlir
 done

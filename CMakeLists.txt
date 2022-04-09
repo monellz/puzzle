@@ -4,6 +4,8 @@ project(puzzle-dialect LANGUAGES CXX C)
 set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to conform to")
 
+option(ENABLE_TEST "enable google test" OFF)
+
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -fsanitize=leak -static-libasan")
 
@@ -40,6 +42,11 @@ add_definitions(-DDBG_MACRO_NO_WARNING)
 
 add_subdirectory(include)
 add_subdirectory(lib)
-# add_subdirectory(test)
 add_subdirectory(puzzle-opt)
 add_subdirectory(puzzle-translate)
+
+
+if (ENABLE_TEST)
+  enable_testing()
+  add_subdirectory(test)
+endif()
