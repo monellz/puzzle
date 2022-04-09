@@ -1,7 +1,6 @@
 #include <cstdio>
 
 #include "stencil_util.h"
-#include "dbg/dbg.h"
 
 extern "C" {
 extern void filter(double *, double *, int64_t, int64_t, int64_t, int64_t, int64_t, double *, double *, int64_t,

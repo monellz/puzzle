@@ -8,8 +8,6 @@
 #include <memory>
 #include <iostream>
 
-#include "dbg/dbg.h"
-
 template <typename T, unsigned Rank>
 struct Square {
   std::unique_ptr<T[]> data;
@@ -31,8 +29,6 @@ struct Square {
     for (int i = Rank - 2; i >= 0; --i) {
       strides[i] = strides[i + 1] * (2 * pad + ub);
     }
-
-    dbg(pad, sizes, strides, total);
   }
 
   void random() {
@@ -69,7 +65,7 @@ struct Square {
     }
     if (err_cnt <= 2 * Rank * sizes[0])
       return true;
-    dbg(err_cnt);
+    std::err << "Err: " << err_cnt << std::endl;
     return false;
   }
 

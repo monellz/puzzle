@@ -1,4 +1,8 @@
-file(GLOB_RECURSE test_src "*.cpp")
+set(test_src
+  laplacian.cpp
+  filter.cpp
+  7point.cpp
+)
 
 foreach(cpp_file ${test_src})
   get_filename_component(case_name "${cpp_file}" NAME_WE)
@@ -54,7 +58,7 @@ foreach(cpp_file ${test_src})
 
   # .s -> .o
   add_custom_command(OUTPUT ${case_name}.o
-    COMMAND ${LLVM_TOOLS_BINARY_DIR}/clang++ -c ${case_name}.s -o ${case_name}.o
+    COMMAND ${LLVM_TOOLS_BINARY_DIR}/clang++ -O3 -c ${case_name}.s -o ${case_name}.o
     DEPENDS ${case_name}_s
   )
   add_custom_target(${case_name}_o DEPENDS ${case_name}.o)

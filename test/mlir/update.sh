@@ -1,5 +1,7 @@
 #!/bin/bash
 set -x
+
+# 这个脚本将example里的pz转换成mlir ir
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 PROJECT_DIR=$(dirname $(dirname "${SCRIPT_DIR}"))
 

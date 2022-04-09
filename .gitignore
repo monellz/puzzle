@@ -6,6 +6,7 @@
 *.bc
 *.ll
 *.s
-laplace_check
 
 .test
+
+test/*.mlir
