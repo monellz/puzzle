@@ -8,6 +8,8 @@
 
 `puzzle-opt`处理MLIR内部的转换，即各个优化pass
 
+`script`里面有一些有用的脚本，比如`build.sh`，可以用这个来build
+
 ## 用法
 
 ### DSL -> MLIR
