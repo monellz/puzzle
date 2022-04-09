@@ -37,7 +37,7 @@ seven_point = stencil {
                   + ALPHA_ZZP * input[0, 0, 1];
 };
 
-seven_point_1 = kernel<3> {
+seven_point_256 = kernel<3> {
   In: input;
   Out: output;
   Pad: 1;
@@ -46,7 +46,7 @@ seven_point_1 = kernel<3> {
 };
 
 
-seven_point_2 = kernel<3> {
+seven_point_384 = kernel<3> {
   In: input;
   Out: output;
   Pad: 1;
@@ -54,7 +54,7 @@ seven_point_2 = kernel<3> {
   Bound: [0, 0, 0] -> [384, 384, 384];
 };
 
-seven_point_3 = kernel<3> {
+seven_point_512 = kernel<3> {
   In: input;
   Out: output;
   Pad: 1;

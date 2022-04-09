@@ -2,7 +2,6 @@
 
 #include "stencil_util.h"
 
-//#include "puzzle_laplacian.h"
 extern "C" {
 extern void laplacian(double *, double *, int64_t, int64_t, int64_t, int64_t, int64_t, double *, double *, int64_t,
                       int64_t, int64_t, int64_t, int64_t);
@@ -29,12 +28,11 @@ int main(int argc, char **argv) {
   out.clear();
   out_ref.clear();
 
-  assert(out == out_ref);
-  laplacian_ref<PAD>(in.data.get(), out.data.get(), 0, out.sizes[0], out.sizes[1], out.strides[0], out.strides[1]);
-  assert(!(out == out_ref));
-  laplacian(in.data.get(), in.data.get(), 0, in.sizes[0], in.sizes[1], in.strides[0], in.strides[1], out_ref.data.get(),
-            out_ref.data.get(), 0, out_ref.sizes[0], out_ref.sizes[1], out_ref.strides[0], out_ref.strides[1]);
-  assert(out == out_ref);
+  laplacian_ref<PAD>(in.data.get(), out_ref.data.get(), 0, out_ref.sizes[0], out_ref.sizes[1], out_ref.strides[0],
+                     out_ref.strides[1]);
+  laplacian(in.data.get(), in.data.get(), 0, in.sizes[0], in.sizes[1], in.strides[0], in.strides[1], out.data.get(),
+            out.data.get(), 0, out.sizes[0], out.sizes[1], out.strides[0], out.strides[1]);
+  assert(out_ref == out);
   std::cout << "laplacian PASS" << std::endl;
   return 0;
 }

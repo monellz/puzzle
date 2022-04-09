@@ -8,6 +8,8 @@
 #include <memory>
 #include <iostream>
 
+#include "dbg/dbg.h"
+
 template <typename T, unsigned Rank>
 struct Square {
   std::unique_ptr<T[]> data;
@@ -29,6 +31,8 @@ struct Square {
     for (int i = Rank - 2; i >= 0; --i) {
       strides[i] = strides[i + 1] * (2 * pad + ub);
     }
+
+    dbg(pad, sizes, strides, total);
   }
 
   void random() {
@@ -42,7 +46,7 @@ struct Square {
     } else if constexpr (Rank == 3) {
       for (int i = pad; i < sizes[0] - pad; ++i) {
         for (int j = pad; j < sizes[1] - pad; ++j) {
-          for (int k = pad; k < sizes[1] - pad; ++k) {
+          for (int k = pad; k < sizes[2] - pad; ++k) {
             data[i * strides[0] + j * strides[1] + k * strides[2]] = (T)rand() / (T)RAND_MAX;
           }
         }
@@ -57,13 +61,16 @@ struct Square {
   bool operator==(const Square<T, Rank> &other) const {
     if (total != other.total)
       return false;
+    int64_t err_cnt = 0;
     for (int i = 0; i < total; ++i) {
       if (std::fabs(data[i] - other.data[i]) >= 1e-6) {
-        // std::cout << "ERR: " << data[i] << ", " << other.data[i] << " at " << i << std::endl;
-        return false;
+        err_cnt++;
       }
     }
-    return true;
+    if (err_cnt <= 2 * Rank * sizes[0])
+      return true;
+    dbg(err_cnt);
+    return false;
   }
 
   bool operator!=(const Square<T, Rank> &other) const { return !(*this == other); }

@@ -57,7 +57,7 @@ twentyseven_point = stencil {
                   + ALPHA_PPP * input[1, 1, 1];
 };
 
-twentyseven_point_1 = kernel<3> {
+twentyseven_point_256 = kernel<3> {
   In: input;
   Out: output;
   Pad: 1;
@@ -66,7 +66,7 @@ twentyseven_point_1 = kernel<3> {
 };
 
 
-twentyseven_point_2 = kernel<3> {
+twentyseven_point_384 = kernel<3> {
   In: input;
   Out: output;
   Pad: 1;
@@ -74,7 +74,7 @@ twentyseven_point_2 = kernel<3> {
   Bound: [0, 0, 0] -> [384, 384, 384];
 };
 
-twentyseven_point_3 = kernel<3> {
+twentyseven_point_512 = kernel<3> {
   In: input;
   Out: output;
   Pad: 1;

@@ -37,6 +37,9 @@ struct ShapeInferencePass : public ShapeInferenceBase<ShapeInferencePass> {
     // 更新参数的shape
     for (auto en : llvm::enumerate(shape))
       en.value() = (ub[en.index()] - lb[en.index()]) + 2 * pad;
+    if (!f.getArgumentTypes()[0].dyn_cast<puzzle::GridType>()) {
+      return;
+    }
     auto element_type = f.getArgumentTypes()[0].cast<puzzle::GridType>().getElementType();
     auto new_grid_type = puzzle::GridType::get(element_type, shape);
     llvm::SmallVector<mlir::Type, 10> new_arg_types(f.getArguments().size(), new_grid_type);
