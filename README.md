@@ -65,9 +65,8 @@ puzzle-translate filter_llvm.mlir  --mlir-to-llvmir -o filter.ll
 然后调用llvm tools去生成最后的.o，需要注意的是这一系列步骤（.ll -> .o）必须使用同一个llvm build的tools，否则可能会出现问题
 
 ```bash
-llvm-as filter.ll -o filter.bc
-llc -O3 filter.bc -o filter.s
-clang++ -O3 filter -c filter.s -o filter.o
+llc -O3 filter.ll -o filter.s
+clang++ -O3 -c filter.s -o filter.o
 ```
 
 到.o之后就clang++/g++都可以用了
@@ -91,3 +90,39 @@ pointer跟aligned_pointer的区别不太清楚，一般用不到aligned的attr�
 
 memref type的访问是 offset + i * stride[0] + j * stride[1] + k * stride[2]，size在mlir里用来给memref::DimOp的，例如一个<2x4x6xf64>的memref的size就是[2, 4, 6]，stride就是[4 * 6, 6, 1]，传入参数要与这个语义一致
 ```
+
+### (GPU) MLIR -> MLIR -> LLVM IR -> .o
+
+首先GPU生成对llvm build有要求，需要在build的时候添加一个cmake选项-DMLIR_ENABLE_CUDA_RUNNER=ON（否则会有一个pass，gpu-to-cubin，不会被放到puzzle-opt或者mlir-opt里）
+
+```bash
+# MLIR -> MLIR
+puzzle-opt filter.mlir \
+  -gpu-kernel-outlining \
+  -pass-pipeline='gpu.module(strip-debuginfo,convert-gpu-to-nvvm,gpu-to-cubin)' \
+  --gpu-to-llvm \
+  -o filter_llvm.mlir
+
+```
+
+MLIR -> LLVM IR -> .o部分跟之前一样
+
+```bash
+# MLIR -> LLVM IR -> .o
+puzzle-translate filter_llvm.mlir  --mlir-to-llvmir -o filter.ll
+
+llc -O3 filter.ll -o filter.s
+clang++ -O3 -c filter.s -o filter.o
+```
+
+最后链接时有区别，需要链接一些mlir的动态库（因为mlir对cuda的一些调用做了一些wrap）
+
+```bash
+# clang++ filter.o filter.cu -L/mnt/ssd/zhongrunxin/mlir/llvm-project/build/lib -lmlir_cuda_runtime -lmlir_runner_utils -lmlir_c_runner_utils  -std=c++17
+
+# 上面这个已经可以了，但如果filter.cu里面用到了cuda的东西就需要添加 cuda.h 头文件和 -lcudart 链接动态库
+clang++ filter.o filter.cu -L/mnt/ssd/zhongrunxin/mlir/llvm-project/build/lib -lmlir_cuda_runtime -lmlir_runner_utils -lmlir_c_runner_utils  -std=c++17 -lcudart
+
+```
+
+运行的时候也要对LD_LIBRARY_PATH进行设定来找到这些动态库
