@@ -27,6 +27,7 @@ void registerAllDialects(DialectRegistry &registry) {
   registry.insert<func::FuncDialect,
                   arith::ArithmeticDialect,
                   cf::ControlFlowDialect,
+                  gpu::GPUDialect,
                   PuzzleDialect>();
   // clang-format on
 }

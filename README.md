@@ -100,6 +100,7 @@ memref type的访问是 offset + i * stride[0] + j * stride[1] + k * stride[2]�
 puzzle-opt filter.mlir \
   -gpu-kernel-outlining \
   -pass-pipeline='gpu.module(strip-debuginfo,convert-gpu-to-nvvm,gpu-to-cubin)' \
+  # 这个换成 --strip-debuginfo --convert-gpu-to-nvvm --gpu-to-cubin 也行
   --gpu-to-llvm \
   -o filter_llvm.mlir
 
@@ -118,10 +119,10 @@ clang++ -O3 -c filter.s -o filter.o
 最后链接时有区别，需要链接一些mlir的动态库（因为mlir对cuda的一些调用做了一些wrap）
 
 ```bash
-# clang++ filter.o filter.cu -L/mnt/ssd/zhongrunxin/mlir/llvm-project/build/lib -lmlir_cuda_runtime -lmlir_runner_utils -lmlir_c_runner_utils  -std=c++17
+cp filter.cpp filter.cu
+nvcc filter.o filter.cu -L/mnt/ssd/zhongrunxin/mlir/llvm-project/build/lib -lmlir_cuda_runtime -lmlir_runner_utils -lmlir_c_runner_utils
 
-# 上面这个已经可以了，但如果filter.cu里面用到了cuda的东西就需要添加 cuda.h 头文件和 -lcudart 链接动态库
-clang++ filter.o filter.cu -L/mnt/ssd/zhongrunxin/mlir/llvm-project/build/lib -lmlir_cuda_runtime -lmlir_runner_utils -lmlir_c_runner_utils  -std=c++17 -lcudart
+# 用clang++/g++都行，但这些需要手动添加-I获得cuda头文件以及-lcudart
 
 ```
 

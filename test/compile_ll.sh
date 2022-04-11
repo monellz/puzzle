@@ -10,8 +10,8 @@ PROJECT_DIR=$(dirname "${SCRIPT_DIR}")
 fullfn="${1##*/}"
 fn="${fullfn%.*}"
 
+module load cuda-10.2/cuda
 LLVM_TOOL_DIR=/home/zhongrunxin/workspace/mlir/llvm-project/build/bin
 
-${LLVM_TOOL_DIR}/llvm-as $1 -o $fn.bc
-${LLVM_TOOL_DIR}/llc -O3 $fn.bc -o $fn.s
+${LLVM_TOOL_DIR}/llc -O3 $fn.ll -o $fn.s
 ${LLVM_TOOL_DIR}/clang++ -O3 -c $fn.s -o $fn.o

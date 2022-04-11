@@ -47,5 +47,13 @@ def ReplaceAllocWithParam: Pass<"puzzle-replace-alloc-with-param", "func::FuncOp
   let constructor = "mlir::puzzle::createReplaceAllocWithParamPass()";
 }
 
+def PuzzleToGPULowering: Pass<"puzzle-to-gpu-lowering", "ModuleOp"> {
+  let summary = "puzzle to gpu lowering";
+  let description = [{
+    puzzle to gpu lowering
+  }];
+  let constructor = "mlir::puzzle::createPuzzleToGPULoweringPass()";
+}
+
 
 #endif
