@@ -61,24 +61,31 @@ int main(int argc, char **argv) {
   flx.clear();
   fly.clear();
 
+  timer.start("filter_ref");
   filter_ref<PAD>(phi.data.get(), lap.data.get(), flx.data.get(), fly.data.get(), alpha.data.get(),
                   result_ref.data.get(), 0, result_ref.sizes[0], result_ref.sizes[1], result_ref.strides[0],
                   result_ref.strides[1]);
+  timer.stop("filter_ref");
 #ifdef __NVCC__
   phi.to_gpu();
   alpha.to_gpu();
   result.to_gpu();
+  timer.start("filter");
   filter(phi.data_gpu, phi.data_gpu, 0, phi.sizes[0], phi.sizes[1], phi.strides[0], phi.strides[1], alpha.data_gpu,
          alpha.data_gpu, 0, alpha.sizes[0], alpha.sizes[1], alpha.strides[0], alpha.strides[1], result.data_gpu,
          result.data_gpu, 0, result.sizes[0], result.sizes[1], result.strides[0], result.strides[1]);
+  timer.stop("filter");
   result.to_cpu();
 #else
+  timer.start("filter");
   filter(phi.data.get(), phi.data.get(), 0, phi.sizes[0], phi.sizes[1], phi.strides[0], phi.strides[1],
          alpha.data.get(), alpha.data.get(), 0, alpha.sizes[0], alpha.sizes[1], alpha.strides[0], alpha.strides[1],
          result.data.get(), result.data.get(), 0, result.sizes[0], result.sizes[1], result.strides[0],
          result.strides[1]);
+  timer.stop("filter");
 #endif
   assert(result_ref == result);
   std::cout << "filter PASS" << std::endl;
+  timer.show_all();
   return 0;
 }

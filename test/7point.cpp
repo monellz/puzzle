@@ -61,22 +61,29 @@ int main(int argc, char **argv) {
   output.clear();
   output_ref.clear();
 
+  timer.start("seven_point_256_ref");
   seven_point_256_ref<PAD>(input.data.get(), output_ref.data.get(), 0, output_ref.sizes[0], output_ref.sizes[1],
                            output_ref.sizes[2], output_ref.strides[0], output_ref.strides[1], output_ref.strides[2]);
+  timer.stop("seven_point_256_ref");
 #ifdef __NVCC__
   input.to_gpu();
   output.to_gpu();
+  timer.start("seven_point_256");
   seven_point_256(input.data_gpu, input.data_gpu, 0, input.sizes[0], input.sizes[1], input.sizes[2], input.strides[0],
                   input.strides[1], input.strides[2], output.data_gpu, output.data_gpu, 0, output.sizes[0],
                   output.sizes[1], output.sizes[2], output.strides[0], output.strides[1], output.strides[2]);
+  timer.stop("seven_point_256");
   output.to_cpu();
 #else
+  timer.start("seven_point_256");
   seven_point_256(input.data.get(), input.data.get(), 0, input.sizes[0], input.sizes[1], input.sizes[2],
                   input.strides[0], input.strides[1], input.strides[2], output.data.get(), output.data.get(), 0,
                   output.sizes[0], output.sizes[1], output.sizes[2], output.strides[0], output.strides[1],
                   output.strides[2]);
+  timer.stop("seven_point_256");
 #endif
   assert(output_ref == output);
   std::cout << "7point 256 PASS" << std::endl;
+  timer.show_all();
   return 0;
 }

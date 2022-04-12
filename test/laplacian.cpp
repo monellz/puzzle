@@ -28,20 +28,27 @@ int main(int argc, char **argv) {
   out.clear();
   out_ref.clear();
 
+  timer.start("laplacian_ref");
   laplacian_ref<PAD>(in.data.get(), out_ref.data.get(), 0, out_ref.sizes[0], out_ref.sizes[1], out_ref.strides[0],
                      out_ref.strides[1]);
+  timer.stop("laplacian_ref");
 
 #ifdef __NVCC__
   in.to_gpu();
   out.to_gpu();
+  timer.start("laplacian");
   laplacian(in.data_gpu, in.data_gpu, 0, in.sizes[0], in.sizes[1], in.strides[0], in.strides[1], out.data_gpu,
             out.data_gpu, 0, out.sizes[0], out.sizes[1], out.strides[0], out.strides[1]);
+  timer.stop("laplacian");
   out.to_cpu();
 #else
+  timer.start("laplacian");
   laplacian(in.data.get(), in.data.get(), 0, in.sizes[0], in.sizes[1], in.strides[0], in.strides[1], out.data.get(),
             out.data.get(), 0, out.sizes[0], out.sizes[1], out.strides[0], out.strides[1]);
+  timer.stop("laplacian");
 #endif
   assert(out_ref == out);
   std::cout << "laplacian PASS" << std::endl;
+  timer.show_all();
   return 0;
 }

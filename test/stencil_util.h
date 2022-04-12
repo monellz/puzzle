@@ -2,6 +2,9 @@
 #define __STENCIL_UTIL
 
 #include <cstdlib>
+#include <cstdio>
+#include <sys/time.h>
+#include <unordered_map>
 #include <cstring>
 #include <cassert>
 #include <cmath>
@@ -100,5 +103,41 @@ struct Square {
 
   bool operator!=(const Square<T, Rank> &other) const { return !(*this == other); }
 };
+
+#define get_elapsed_time_ms(_s, _e) (1000.0 * (_e.tv_sec - _s.tv_sec) + (_e.tv_usec - _s.tv_usec) / 1000.0)
+struct mytimer_t {
+  std::unordered_map<const char *, double> elapsed_time_ms;
+  std::unordered_map<const char *, int> count;
+  std::unordered_map<const char *, timeval> time_point;
+
+  void start(const char *func) {
+#ifdef __NVCC__
+    cudaDeviceSynchronize();
+#endif
+    timeval s;
+    gettimeofday(&s, NULL);
+    time_point[func] = s;
+  }
+  void stop(const char *func) {
+#ifdef __NVCC__
+    cudaDeviceSynchronize();
+#endif
+    timeval e;
+    gettimeofday(&e, NULL);
+    count[func]++;
+    timeval s = time_point[func];
+    elapsed_time_ms[func] += get_elapsed_time_ms(s, e);
+  }
+  void show_all() {
+    for (auto it = elapsed_time_ms.begin(); it != elapsed_time_ms.end(); ++it) {
+      auto func = it->first;
+      double t = it->second;
+      int c = count[func];
+      printf("%s: %lf ms / %d count, avg %lf ms\n", func, t, c, t / c);
+    }
+  }
+};
+
+mytimer_t timer;
 
 #endif
