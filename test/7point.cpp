@@ -36,8 +36,9 @@ extern void seven_point_256(double *, double *, int64_t, int64_t, int64_t, int64
 }
 
 template <unsigned PAD>
-void seven_point_256_ref(double *input, double *output, int64_t offset, int64_t size_a, int64_t size_b, int64_t size_c,
-                         int64_t stride_a, int64_t stride_b, int64_t stride_c) {
+__attribute__((noinline)) void seven_point_256_ref(double *input, double *output, int64_t offset, int64_t size_a,
+                                                   int64_t size_b, int64_t size_c, int64_t stride_a, int64_t stride_b,
+                                                   int64_t stride_c) {
 #define INDEX(i, j, k) (offset + (i)*stride_a + (j)*stride_b + (k)*stride_c)
   for (int i = PAD; i < size_a - PAD; ++i) {
     for (int j = PAD; j < size_b - PAD; ++j) {

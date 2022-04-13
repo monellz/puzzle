@@ -31,6 +31,7 @@ foreach(cpp_file ${cpp_test_src})
             --inline
             --puzzle-stencil-fusion --cse
             --puzzle-to-affine-lowering --cse
+            --canonicalize
             --puzzle-replace-alloc-with-param --cse
             --canonicalize
             --lower-affine
@@ -65,7 +66,7 @@ foreach(cpp_file ${cpp_test_src})
   add_custom_target(${case_name}_o DEPENDS ${case_name}.o)
 
   add_custom_target(${case_name}_t
-    COMMAND ${LLVM_TOOLS_BINARY_DIR}/clang++ -O3 -std=c++17 ${PROJECT_SOURCE_DIR}/test/${cpp_file} ${case_name}.o -o ${case_name}.test -I${PROJECT_SOURCE_DIR}/3rdparty
+    COMMAND ${LLVM_TOOLS_BINARY_DIR}/clang++ -O3 -g -std=c++17 ${PROJECT_SOURCE_DIR}/test/${cpp_file} ${case_name}.o -o ${case_name}.test -I${PROJECT_SOURCE_DIR}/3rdparty
     DEPENDS ${case_name}_o
   )
 

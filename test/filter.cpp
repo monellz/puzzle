@@ -9,8 +9,9 @@ extern void filter(double *, double *, int64_t, int64_t, int64_t, int64_t, int64
 
 const double lap_factor = 4.0;
 template <unsigned PAD>
-void filter_ref(double *phi, double *lap, double *flx, double *fly, double *alpha, double *result, int64_t offset,
-                int64_t size_a, int64_t size_b, int64_t stride_a, int64_t stride_b) {
+__attribute__((noinline)) void filter_ref(double *phi, double *lap, double *flx, double *fly, double *alpha,
+                                          double *result, int64_t offset, int64_t size_a, int64_t size_b,
+                                          int64_t stride_a, int64_t stride_b) {
 #define INDEX(i, j) (offset + (i)*stride_a + (j)*stride_b)
   for (int i = PAD; i < size_a - PAD; ++i) {
     for (int j = PAD; j < size_b - PAD; ++j) {
@@ -62,26 +63,32 @@ int main(int argc, char **argv) {
   fly.clear();
 
   timer.start("filter_ref");
-  filter_ref<PAD>(phi.data.get(), lap.data.get(), flx.data.get(), fly.data.get(), alpha.data.get(),
-                  result_ref.data.get(), 0, result_ref.sizes[0], result_ref.sizes[1], result_ref.strides[0],
-                  result_ref.strides[1]);
+  for (int i = 0; i < 100; ++i) {
+    filter_ref<PAD>(phi.data.get(), lap.data.get(), flx.data.get(), fly.data.get(), alpha.data.get(),
+                    result_ref.data.get(), 0, result_ref.sizes[0], result_ref.sizes[1], result_ref.strides[0],
+                    result_ref.strides[1]);
+  }
   timer.stop("filter_ref");
 #ifdef __NVCC__
   phi.to_gpu();
   alpha.to_gpu();
   result.to_gpu();
   timer.start("filter");
-  filter(phi.data_gpu, phi.data_gpu, 0, phi.sizes[0], phi.sizes[1], phi.strides[0], phi.strides[1], alpha.data_gpu,
-         alpha.data_gpu, 0, alpha.sizes[0], alpha.sizes[1], alpha.strides[0], alpha.strides[1], result.data_gpu,
-         result.data_gpu, 0, result.sizes[0], result.sizes[1], result.strides[0], result.strides[1]);
+  for (int i = 0; i < 100; ++i) {
+    filter(phi.data_gpu, phi.data_gpu, 0, phi.sizes[0], phi.sizes[1], phi.strides[0], phi.strides[1], alpha.data_gpu,
+           alpha.data_gpu, 0, alpha.sizes[0], alpha.sizes[1], alpha.strides[0], alpha.strides[1], result.data_gpu,
+           result.data_gpu, 0, result.sizes[0], result.sizes[1], result.strides[0], result.strides[1]);
+  }
   timer.stop("filter");
   result.to_cpu();
 #else
   timer.start("filter");
-  filter(phi.data.get(), phi.data.get(), 0, phi.sizes[0], phi.sizes[1], phi.strides[0], phi.strides[1],
-         alpha.data.get(), alpha.data.get(), 0, alpha.sizes[0], alpha.sizes[1], alpha.strides[0], alpha.strides[1],
-         result.data.get(), result.data.get(), 0, result.sizes[0], result.sizes[1], result.strides[0],
-         result.strides[1]);
+  for (int i = 0; i < 100; ++i) {
+    filter(phi.data.get(), phi.data.get(), 0, phi.sizes[0], phi.sizes[1], phi.strides[0], phi.strides[1],
+           alpha.data.get(), alpha.data.get(), 0, alpha.sizes[0], alpha.sizes[1], alpha.strides[0], alpha.strides[1],
+           result.data.get(), result.data.get(), 0, result.sizes[0], result.sizes[1], result.strides[0],
+           result.strides[1]);
+  }
   timer.stop("filter");
 #endif
   assert(result_ref == result);
