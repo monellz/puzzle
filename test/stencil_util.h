@@ -11,6 +11,8 @@
 #include <memory>
 #include <iostream>
 
+#include "cuda_runtime.h"
+
 template <typename T, unsigned Rank>
 struct Square {
   std::unique_ptr<T[]> data;

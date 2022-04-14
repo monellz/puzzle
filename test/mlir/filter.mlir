@@ -77,7 +77,7 @@ module {
     }
     puzzle.return %0 : !puzzle.grid<?x?xf64>
   }
-  func @filter(%arg0: !puzzle.grid<?x?xf64>, %arg1: !puzzle.grid<?x?xf64>, %arg2: !puzzle.grid<?x?xf64>) attributes {lb = [0 : index, 0 : index], pad = 2 : index, rank = 2 : i64, ub = [64 : index, 64 : index]} {
+  func @filter(%arg0: !puzzle.grid<?x?xf64>, %arg1: !puzzle.grid<?x?xf64>, %arg2: !puzzle.grid<?x?xf64>) attributes {lb = [0 : index, 0 : index], pad = 2 : index, rank = 2 : i64, ub = [512 : index, 512 : index]} {
     %0 = puzzle.call @laplacian(%arg0) : (!puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64>
     %1 = puzzle.call @diffusive_flux_y(%arg0, %0) : (!puzzle.grid<?x?xf64>, !puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64>
     %2 = puzzle.call @diffusive_flux_x(%arg0, %0) : (!puzzle.grid<?x?xf64>, !puzzle.grid<?x?xf64>) -> !puzzle.grid<?x?xf64>
