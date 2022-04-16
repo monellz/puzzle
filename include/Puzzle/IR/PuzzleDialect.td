@@ -16,6 +16,7 @@ def Puzzle_Dialect : Dialect {
     "::mlir::AffineDialect",
     "::mlir::cf::ControlFlowDialect",
     "::mlir::memref::MemRefDialect",
+    "::mlir::linalg::LinalgDialect",
     "::mlir::gpu::GPUDialect",
   ];
   let extraClassDeclaration = [{

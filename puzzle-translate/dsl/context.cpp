@@ -41,7 +41,7 @@ void DSLContext::translate(Kernel *k) {
     func_attrs.push_back(builder.getNamedAttr("ub", builder.getIndexArrayAttr(kernel_info.ub)));
   }
   func::FuncOp kernel_op = builder.create<func::FuncOp>(loc(k->loc), k->ident, func_type, func_attrs);
-  mlir::Block *entry_block = builder.createBlock(&kernel_op.getOperation()->getRegion(0));
+  mlir::Block *entry_block = builder.createBlock(kernel_op.getBody());
 
   // entry block
   llvm::SmallVector<mlir::Location, 4> arg_locs(arg_types.size(), loc(k->loc));
@@ -62,11 +62,16 @@ void DSLContext::translate(Kernel *k) {
     llvm::SmallVector<Value, 4> operands;
     // TODO: 这里操作数的顺序跟这个数据结构的顺序有关 unordered_set，是否需要换成一个顺序确定的结构比如vector/set
     // FIXME
+    // in和out都放进去
     for (auto in_ident : analyst.stencil_in[stencil]) {
       operands.push_back(symbol_table.lookup(in_ident));
     }
+    // 检查out是否在symbol table里，如果不在，需要在kernel最前面插入alloc
+    for (auto out_ident : analyst.stencil_out[stencil]) {
+      operands.push_back(symbol_table.lookup(out_ident));
+    }
 
-    Value result = builder.create<puzzle::CallOp>(loc(k->loc), stencil, operands);
+    Value result = builder.create<func::CallOp>(loc(k->loc), stencil, operands);
     symbol_table.insert(*analyst.stencil_out[stencil].begin(), result);
   }
 

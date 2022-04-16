@@ -28,6 +28,7 @@ void registerAllDialects(DialectRegistry &registry) {
                   arith::ArithmeticDialect,
                   cf::ControlFlowDialect,
                   gpu::GPUDialect,
+                  linalg::LinalgDialect,
                   PuzzleDialect>();
   // clang-format on
 }
@@ -57,11 +58,6 @@ void registerPuzzleTranslations() {
     dsl::DSLContext dsl_context = dsl::DSLContext(std::move(m), context);
     mlir::OwningOpRef<mlir::ModuleOp> module_ref = dsl_context.translateDSLToMLIR();
     return module_ref;
-  });
-
-  TranslateFromMLIRRegistration mlir_to_header("mlir-to-header", [](ModuleOp module_op, llvm::raw_ostream &output) {
-    header::CodeGen codegen(module_op, output);
-    return codegen.translate();
   });
 }
 

@@ -42,11 +42,11 @@ add_definitions(-DDBG_MACRO_NO_WARNING)
 
 add_subdirectory(include)
 add_subdirectory(lib)
-add_subdirectory(puzzle-opt)
+#add_subdirectory(puzzle-opt)
 add_subdirectory(puzzle-translate)
 
 
-if (ENABLE_TEST)
-  enable_testing()
-  add_subdirectory(test)
-endif()
+#if (ENABLE_TEST)
+#  enable_testing()
+#  add_subdirectory(test)
+#endif()
