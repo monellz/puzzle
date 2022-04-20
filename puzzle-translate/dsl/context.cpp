@@ -22,9 +22,12 @@ void DSLContext::translate(Kernel *k) {
   // 用func::FuncOp构造kernel
   mlir::Type tensor_type =
       mlir::RankedTensorType::get(llvm::SmallVector<int64_t, 4>(k->rank, -1), DEFAULT_ELEMENT_TYPE);
+  mlir::Type memref_type = mlir::MemRefType::get(llvm::SmallVector<int64_t, 4>(k->rank, -1), DEFAULT_ELEMENT_TYPE);
   auto &kernel_info = analyst.kernel_info[k->ident];
-  llvm::SmallVector<mlir::Type, 10> arg_types(kernel_info.in.size() + kernel_info.out.size() + kernel_info.buf.size(),
-                                              tensor_type);
+  // kernel的参数都是memref
+  // llvm::SmallVector<mlir::Type, 10> arg_types(kernel_info.in.size() + kernel_info.out.size() +
+  // kernel_info.buf.size(), memref_type);
+  llvm::SmallVector<mlir::Type, 10> arg_types(kernel_info.in.size() + kernel_info.out.size(), memref_type);
   // kernel函数只有输入参数，没有输出参数
   auto func_type = builder.getFunctionType(arg_types, llvm::None);
   llvm::SmallVector<mlir::NamedAttribute, 10> func_attrs;
@@ -54,23 +57,42 @@ void DSLContext::translate(Kernel *k) {
   };
   update_symbol(kernel_info.in, 0);
   update_symbol(kernel_info.out, kernel_info.in.size());
-  update_symbol(kernel_info.buf, kernel_info.in.size() + kernel_info.out.size());
+  // update_symbol(kernel_info.buf, kernel_info.in.size() + kernel_info.out.size());
 
   builder.setInsertionPointToStart(entry_block);
+  // 将in memref都变成tensor
+  for (auto in_ident : kernel_info.in) {
+    bufferization::ToTensorOp to_tensor_op =
+        builder.create<bufferization::ToTensorOp>(loc(k->loc), tensor_type, symbol_table.lookup(in_ident));
+    symbol_table.insert(in_ident, to_tensor_op.getResult());
+  }
   // 按顺序调用stencil
   for (auto stencil : analyst.kernel_info[k->ident].call_order) {
     llvm::SmallVector<Value, 4> operands;
     // TODO: 这里操作数的顺序跟这个数据结构的顺序有关 unordered_set，是否需要换成一个顺序确定的结构比如vector/set
     // FIXME
-    // in和out都放进去
+    // in放进去
     for (auto in_ident : analyst.stencil_info[stencil].in) {
       operands.push_back(symbol_table.lookup(in_ident));
     }
+    /*
     for (auto out_ident : analyst.stencil_info[stencil].out) {
       operands.push_back(symbol_table.lookup(out_ident));
     }
-    builder.create<func::CallOp>(loc(k->loc), stencil, mlir::TypeRange(), operands);
+    */
+    func::CallOp call_op = builder.create<func::CallOp>(loc(k->loc), stencil, tensor_type, operands);
+    // 存入result
+    assert(analyst.stencil_info[stencil].out.size() == 1);
+    // assume: out不会再成为另一个stencil的in
+    auto out_ident = *analyst.stencil_info[stencil].out.begin();
+    if (std::find(kernel_info.out.begin(), kernel_info.out.end(), out_ident) != kernel_info.out.end()) {
+      // save to memref
+      builder.create<memref::TensorStoreOp>(loc(k->loc), call_op.getResult(0), symbol_table.lookup(out_ident));
+    } else {
+      symbol_table.insert(out_ident, call_op.getResult(0));
+    }
   }
+
   builder.create<func::ReturnOp>(loc(k->loc));
   // dbg("kernel_done");
 }
@@ -81,10 +103,11 @@ void DSLContext::translate(Stencil *s) {
   builder.setInsertionPointToEnd(mlir_module.getBody());
   size_t rank = analyst.stencil_info[s->ident].rank;
   mlir::Type tensor_type = mlir::RankedTensorType::get(llvm::SmallVector<int64_t, 4>(rank, -1), DEFAULT_ELEMENT_TYPE);
-  llvm::SmallVector<mlir::Type, 4> arg_types(
-      analyst.stencil_info[s->ident].in.size() + analyst.stencil_info[s->ident].out.size(), tensor_type);
+  // llvm::SmallVector<mlir::Type, 4> arg_types( analyst.stencil_info[s->ident].in.size() +
+  // analyst.stencil_info[s->ident].out.size(), tensor_type);
+  llvm::SmallVector<mlir::Type, 4> arg_types(analyst.stencil_info[s->ident].in.size(), tensor_type);
   // 只有一个输出
-  auto func_type = builder.getFunctionType(arg_types, llvm::None);
+  auto func_type = builder.getFunctionType(arg_types, tensor_type);
   auto stencil_op = builder.create<func::FuncOp>(loc(s->loc), s->ident, func_type);
   stencil_op.setPrivate();
   mlir::Block *entry_block = builder.createBlock(&stencil_op.getBody());
@@ -97,7 +120,6 @@ void DSLContext::translate(Stencil *s) {
     }
   };
   update_symbol(analyst.stencil_info[s->ident].in, 0);
-  update_symbol(analyst.stencil_info[s->ident].out, analyst.stencil_info[s->ident].in.size());
 
   // 进入body
   builder.setInsertionPointToStart(entry_block);
@@ -133,19 +155,7 @@ void DSLContext::translate(Stencil *s) {
     }
   }
   assert(max_temp_var >= num_temp_var);
-  // 先fill 0
-  // linalg::InitTensorOp init_op = builder.create<linalg::InitTensorOp>(loc(s->loc), dim_vals,
-  // llvm::SmallVector<int64_t, 4>(rank, -1), DEFAULT_ELEMENT_TYPE);
   assert(analyst.stencil_info[s->ident].out.size() == 1);
-  auto out_ident = *analyst.stencil_info[s->ident].out.begin();
-  /*
-  auto zero_fp64 = builder.create<arith::ConstantOp>(loc(s->loc), builder.getFloatAttr(DEFAULT_ELEMENT_TYPE,
-  0.0)).getResult();
-  // TODO: 是否可以去掉
-  linalg::FillOp fill_op = builder.create<linalg::FillOp>(loc(s->loc), zero_fp64, symbol_table.lookup(out_ident));
-  // 替换out tensor
-  symbol_table.insert(out_ident, fill_op.getResult(0));
-  */
   // 生成一个generic op
   llvm::SmallVector<Value, 10> inputs;
   llvm::SmallVector<llvm::StringRef, 10> input_idents;
@@ -161,8 +171,12 @@ void DSLContext::translate(Stencil *s) {
   const static std::string_view WINDOW = "window";
   iter_types.push_back(PARALLEL);
   iter_types.push_back(WINDOW);
+  // 生成一个临时output
+  // linalg::InitTensorOp init_op = builder.create<linalg::InitTensorOp>(loc(s->loc), llvm::SmallVector<int64_t,
+  // 1>(rank, -1), DEFAULT_ELEMENT_TYPE);
+  linalg::InitTensorOp init_op = builder.create<linalg::InitTensorOp>(loc(s->loc), dim_vals, DEFAULT_ELEMENT_TYPE);
   linalg::GenericOp generic_op = builder.create<linalg::GenericOp>(
-      loc(s->loc), tensor_type, inputs, symbol_table.lookup(out_ident), maps, iter_types,
+      loc(s->loc), tensor_type, inputs, init_op.getResult(), maps, iter_types,
       [&](OpBuilder &nested_builder, mlir::Location loc, ValueRange args) {
         // linalg::GenericOp generic_op = builder.create<linalg::GenericOp>(loc(s->loc), inputs,
         // symbol_table.lookup(out_ident), maps, iter_types, [&](OpBuilder& nested_builder, mlir::Location loc,
@@ -185,7 +199,7 @@ void DSLContext::translate(Stencil *s) {
 
   // TODO
   // builder.create<func::ReturnOp>(loc(s->loc), generic_op.getResult(0));
-  builder.create<func::ReturnOp>(loc(s->loc));
+  builder.create<func::ReturnOp>(loc(s->loc), generic_op.getResult(0));
   // stencil_op->dump();
   // assert(false);
 

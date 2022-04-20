@@ -29,6 +29,7 @@ void registerAllDialects(DialectRegistry &registry) {
                   gpu::GPUDialect,
                   linalg::LinalgDialect,
                   tensor::TensorDialect,
+                  mlir::bufferization::BufferizationDialect,
                   PuzzleDialect>();
   // clang-format on
 }

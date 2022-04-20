@@ -16,6 +16,7 @@
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/GPU/GPUDialect.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/Bufferization/IR/Bufferization.h"
 
 #include "Puzzle/IR/PuzzleOpsDialect.h.inc"
 #include "Puzzle/IR/PuzzleOps.h"
