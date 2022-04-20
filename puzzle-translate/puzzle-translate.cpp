@@ -19,7 +19,6 @@
 #include "puzzle-translate/dsl/ast.h"
 #include "puzzle-translate/dsl/parser.h"
 #include "puzzle-translate/dsl/context.h"
-#include "puzzle-translate/header/codegen.h"
 
 namespace mlir::puzzle {
 void registerAllDialects(DialectRegistry &registry) {
@@ -29,6 +28,7 @@ void registerAllDialects(DialectRegistry &registry) {
                   cf::ControlFlowDialect,
                   gpu::GPUDialect,
                   linalg::LinalgDialect,
+                  tensor::TensorDialect,
                   PuzzleDialect>();
   // clang-format on
 }

@@ -35,6 +35,8 @@ private:
   mlir::OpBuilder builder;
   ModuleOp mlir_module;
   llvm::ScopedHashTable<llvm::StringRef, mlir::Value> symbol_table;
+  // 保证生命周期长于scope
+  std::vector<std::string> extra_temp_var_names;
 
   Analyst analyst;
   mlir::Type DEFAULT_ELEMENT_TYPE;

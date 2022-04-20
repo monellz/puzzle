@@ -20,10 +20,11 @@ void DSLContext::translate(Kernel *k) {
   builder.setInsertionPointToEnd(mlir_module.getBody());
 
   // 用func::FuncOp构造kernel
-  mlir::Type element_type = DEFAULT_ELEMENT_TYPE;
+  mlir::Type tensor_type =
+      mlir::RankedTensorType::get(llvm::SmallVector<int64_t, 4>(k->rank, -1), DEFAULT_ELEMENT_TYPE);
   auto &kernel_info = analyst.kernel_info[k->ident];
-  llvm::SmallVector<mlir::Type, 10> arg_types(kernel_info.in.size() + kernel_info.out.size(),
-                                              GridType::get(element_type, k->rank));
+  llvm::SmallVector<mlir::Type, 10> arg_types(kernel_info.in.size() + kernel_info.out.size() + kernel_info.buf.size(),
+                                              tensor_type);
   // kernel函数只有输入参数，没有输出参数
   auto func_type = builder.getFunctionType(arg_types, llvm::None);
   llvm::SmallVector<mlir::NamedAttribute, 10> func_attrs;
@@ -41,77 +42,155 @@ void DSLContext::translate(Kernel *k) {
     func_attrs.push_back(builder.getNamedAttr("ub", builder.getIndexArrayAttr(kernel_info.ub)));
   }
   func::FuncOp kernel_op = builder.create<func::FuncOp>(loc(k->loc), k->ident, func_type, func_attrs);
-  mlir::Block *entry_block = builder.createBlock(kernel_op.getBody());
+  mlir::Block *entry_block = builder.createBlock(&kernel_op.getBody());
 
   // entry block
-  llvm::SmallVector<mlir::Location, 4> arg_locs(arg_types.size(), loc(k->loc));
+  llvm::SmallVector<mlir::Location, 10> arg_locs(arg_types.size(), loc(k->loc));
   entry_block->addArguments(arg_types, arg_locs);
-  for (size_t i = 0; i < kernel_info.in.size(); ++i) {
-    auto in_ident = kernel_info.in[i];
-    symbol_table.insert(in_ident, entry_block->getArgument((unsigned)i));
-  }
-  llvm::SmallVector<mlir::Value, 4> final_results;
-  for (size_t i = kernel_info.in.size(); i < kernel_info.in.size() + kernel_info.out.size(); ++i) {
-    final_results.push_back(entry_block->getArgument((unsigned)i));
-  }
-  builder.setInsertionPointToStart(entry_block);
+  auto update_symbol = [&](std::vector<std::string_view> &v, size_t offset) {
+    for (auto en : llvm::enumerate(v)) {
+      symbol_table.insert(en.value(), entry_block->getArgument(offset + en.index()));
+    }
+  };
+  update_symbol(kernel_info.in, 0);
+  update_symbol(kernel_info.out, kernel_info.in.size());
+  update_symbol(kernel_info.buf, kernel_info.in.size() + kernel_info.out.size());
 
+  builder.setInsertionPointToStart(entry_block);
   // 按顺序调用stencil
-  auto &stencil_order = analyst.call_order[k->ident];
-  for (auto stencil : stencil_order) {
+  for (auto stencil : analyst.kernel_info[k->ident].call_order) {
     llvm::SmallVector<Value, 4> operands;
     // TODO: 这里操作数的顺序跟这个数据结构的顺序有关 unordered_set，是否需要换成一个顺序确定的结构比如vector/set
     // FIXME
     // in和out都放进去
-    for (auto in_ident : analyst.stencil_in[stencil]) {
+    for (auto in_ident : analyst.stencil_info[stencil].in) {
       operands.push_back(symbol_table.lookup(in_ident));
     }
-    // 检查out是否在symbol table里，如果不在，需要在kernel最前面插入alloc
-    for (auto out_ident : analyst.stencil_out[stencil]) {
+    for (auto out_ident : analyst.stencil_info[stencil].out) {
       operands.push_back(symbol_table.lookup(out_ident));
     }
-
-    Value result = builder.create<func::CallOp>(loc(k->loc), stencil, operands);
-    symbol_table.insert(*analyst.stencil_out[stencil].begin(), result);
+    builder.create<func::CallOp>(loc(k->loc), stencil, mlir::TypeRange(), operands);
   }
-
-  assert(final_results.size() == kernel_info.out.size());
-  for (size_t i = 0; i < final_results.size(); ++i) {
-    builder.create<SaveOp>(loc(k->loc), symbol_table.lookup(kernel_info.out[i]), final_results[i]);
-  }
-
   builder.create<func::ReturnOp>(loc(k->loc));
   // dbg("kernel_done");
 }
 
 void DSLContext::translate(Stencil *s) {
-  // stencil之内只有一个scope，没有变量定义，所有等号左边都只能是 grid_ident[0, 0, 0]
+  // stencil之内只有一个scope
   llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> stencil_scope(symbol_table);
   builder.setInsertionPointToEnd(mlir_module.getBody());
-  // 用puzzle::StencilOp构造stencil
-  size_t rank = analyst.stencil_rank[s->ident];
-  mlir::Type element_type = DEFAULT_ELEMENT_TYPE;
-  llvm::SmallVector<mlir::Type, 4> arg_types(analyst.stencil_in[s->ident].size(), GridType::get(element_type, rank));
+  size_t rank = analyst.stencil_info[s->ident].rank;
+  mlir::Type tensor_type = mlir::RankedTensorType::get(llvm::SmallVector<int64_t, 4>(rank, -1), DEFAULT_ELEMENT_TYPE);
+  llvm::SmallVector<mlir::Type, 4> arg_types(
+      analyst.stencil_info[s->ident].in.size() + analyst.stencil_info[s->ident].out.size(), tensor_type);
   // 只有一个输出
-  auto func_type = builder.getFunctionType(arg_types, GridType::get(element_type, rank));
-  llvm::SmallVector<mlir::NamedAttribute, 1> func_attrs;
-  func_attrs.push_back(builder.getNamedAttr("rank", builder.getIndexAttr(rank)));
-  StencilOp stencil_op = builder.create<StencilOp>(loc(s->loc), s->ident, func_type, func_attrs);
+  auto func_type = builder.getFunctionType(arg_types, llvm::None);
+  auto stencil_op = builder.create<func::FuncOp>(loc(s->loc), s->ident, func_type);
   stencil_op.setPrivate();
-  mlir::Block *entry_block = &stencil_op.front();
-  /*
-  size_t _i = 0;
-  for (auto in_ident : analyst.stencil_in[s->ident]) {
-    symbol_table.insert(in_ident, entry_block->getArgument((unsigned)_i));
-    ++_i;
-  }
-  */
+  mlir::Block *entry_block = builder.createBlock(&stencil_op.getBody());
+  // entry block
+  llvm::SmallVector<mlir::Location, 4> arg_locs(arg_types.size(), loc(s->loc));
+  entry_block->addArguments(arg_types, arg_locs);
+  auto update_symbol = [&](std::unordered_set<std::string_view> &v, size_t offset) {
+    for (auto en : llvm::enumerate(v)) {
+      symbol_table.insert(en.value(), entry_block->getArgument(offset + en.index()));
+    }
+  };
+  update_symbol(analyst.stencil_info[s->ident].in, 0);
+  update_symbol(analyst.stencil_info[s->ident].out, analyst.stencil_info[s->ident].in.size());
 
   // 进入body
   builder.setInsertionPointToStart(entry_block);
+  // 获得dim
+  llvm::SmallVector<mlir::Value, 4> dim_vals;
+  for (size_t i = 0; i < rank; ++i) {
+    auto val = builder.create<tensor::DimOp>(loc(s->loc), entry_block->getArgument(0), i).getResult();
+    dim_vals.push_back(val);
+  }
 
-  // 生成一个applyOp
-  assert(analyst.stencil_out[s->ident].size() == 1);
+  // 生成一个generic op需要的东西
+  // 一些常数
+  extra_temp_var_names.clear();
+  const int max_temp_var = 50;
+  int num_temp_var = 0;
+  extra_temp_var_names.reserve(max_temp_var);
+  auto one = builder.create<arith::ConstantOp>(loc(s->loc), builder.getIndexAttr(1)).getResult();
+  for (auto &[in_ident, in_index_set] : analyst.stencil_info[s->ident].in_index) {
+    for (auto &index : in_index_set) {
+      extra_temp_var_names.push_back(std::string(in_ident) + vec_str(index));
+      num_temp_var++;
+      std::string str = std::string(in_ident) + vec_str(index);
+      llvm::SmallVector<mlir::Value, 4> index_vals;
+      for (int64_t i : index) {
+        auto v = builder.create<arith::ConstantOp>(loc(s->loc), builder.getIndexAttr(i)).getResult();
+        index_vals.push_back(v);
+      }
+      // 生成tensor.extract_slice
+      tensor::ExtractSliceOp slice_op =
+          builder.create<tensor::ExtractSliceOp>(loc(s->loc), symbol_table.lookup(in_ident), index_vals, dim_vals,
+                                                 llvm::SmallVector<mlir::Value, 4>(rank, one));
+      symbol_table.insert(extra_temp_var_names.back(), slice_op.getResult());
+    }
+  }
+  assert(max_temp_var >= num_temp_var);
+  // 先fill 0
+  // linalg::InitTensorOp init_op = builder.create<linalg::InitTensorOp>(loc(s->loc), dim_vals,
+  // llvm::SmallVector<int64_t, 4>(rank, -1), DEFAULT_ELEMENT_TYPE);
+  assert(analyst.stencil_info[s->ident].out.size() == 1);
+  auto out_ident = *analyst.stencil_info[s->ident].out.begin();
+  /*
+  auto zero_fp64 = builder.create<arith::ConstantOp>(loc(s->loc), builder.getFloatAttr(DEFAULT_ELEMENT_TYPE,
+  0.0)).getResult();
+  // TODO: 是否可以去掉
+  linalg::FillOp fill_op = builder.create<linalg::FillOp>(loc(s->loc), zero_fp64, symbol_table.lookup(out_ident));
+  // 替换out tensor
+  symbol_table.insert(out_ident, fill_op.getResult(0));
+  */
+  // 生成一个generic op
+  llvm::SmallVector<Value, 10> inputs;
+  llvm::SmallVector<llvm::StringRef, 10> input_idents;
+  for (auto &temp_ident : extra_temp_var_names) {
+    // dbg(temp_ident);
+    inputs.push_back(symbol_table.lookup(temp_ident));
+    input_idents.push_back(temp_ident);
+  }
+  AffineMap map = AffineMap::getMultiDimIdentityMap(rank, builder.getContext());
+  llvm::SmallVector<AffineMap, 10> maps(inputs.size() + 1, map);
+  llvm::SmallVector<llvm::StringRef, 10> iter_types;
+  const static std::string_view PARALLEL = "parallel";
+  const static std::string_view WINDOW = "window";
+  iter_types.push_back(PARALLEL);
+  iter_types.push_back(WINDOW);
+  linalg::GenericOp generic_op = builder.create<linalg::GenericOp>(
+      loc(s->loc), tensor_type, inputs, symbol_table.lookup(out_ident), maps, iter_types,
+      [&](OpBuilder &nested_builder, mlir::Location loc, ValueRange args) {
+        // linalg::GenericOp generic_op = builder.create<linalg::GenericOp>(loc(s->loc), inputs,
+        // symbol_table.lookup(out_ident), maps, iter_types, [&](OpBuilder& nested_builder, mlir::Location loc,
+        // ValueRange args) {
+        //  更新symboltable
+        llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> stencil_body_scope(symbol_table);
+        for (size_t i = 0; i < args.size() - 1; ++i) {
+          // dbg(input_idents[i]);
+          symbol_table.insert(input_idents[i], args[i]);
+        }
+        // symbol_table.insert(out_ident, args.back());
+
+        // into
+        for (auto &inner_s : s->body->stmts) {
+          translate(inner_s.get());
+        }
+      });
+
+  // builder.setInsertionPointToStart(entry_block);
+
+  // TODO
+  // builder.create<func::ReturnOp>(loc(s->loc), generic_op.getResult(0));
+  builder.create<func::ReturnOp>(loc(s->loc));
+  // stencil_op->dump();
+  // assert(false);
+
+  /*
+
   ApplyOp apply_op =
       builder.create<ApplyOp>(loc(s->loc), GridType::get(element_type, rank), entry_block->getArguments());
   size_t _i = 0;
@@ -136,6 +215,7 @@ void DSLContext::translate(Stencil *s) {
   builder.setInsertionPointToEnd(entry_block);
   builder.create<ReturnOp>(loc(s->loc), apply_op.getResults());
   // dbg("stencil done");
+  */
 }
 
 void DSLContext::translate(Stmt *s) {
@@ -151,6 +231,8 @@ void DSLContext::translate(Block *b) {
   // dbg("block done");
 }
 void DSLContext::translate(If *i) {
+  llvm_unreachable("if not support");
+  /*
   Value cond_result = translate(i->cond.get());
   // cond_result的必须是1 bit value
   mlir::Block *prev_block = cond_result.getDefiningOp()->getBlock();
@@ -209,18 +291,20 @@ void DSLContext::translate(If *i) {
     ++_i;
   }
   // 结束
+  */
 }
 
 void DSLContext::translate(Assign *a) {
   Value rhs = translate(a->rhs.get());
-  // 生成一个store op
-  StoreOp op = builder.create<StoreOp>(loc(a->loc), rhs, a->index);
-  // 更新符号表
-  // TODO: 这里是否需要把index信息添加到符号表中？ 否则将不支持等号左边 ident相同，index不同的情况
-  // FIXME: 考虑添加一个assert在ast分析阶段
-  // dbg(a->ident);
-  symbol_table.insert(a->ident, op.getResult());
-  // dbg("assign done");
+  if (a->index.size() == 0) {
+    // 临时变量
+    symbol_table.insert(a->ident, rhs);
+  } else {
+    assert(llvm::all_of(a->index, [](int64_t v) { return v == 0; }));
+    // 生成一个yield
+    // assume: 每个stencil只有一个write op
+    builder.create<linalg::YieldOp>(loc(a->loc), rhs);
+  }
 }
 
 Value DSLContext::translate(Expr *e) {
@@ -309,17 +393,20 @@ Value DSLContext::translate(Select *s) {
 Value DSLContext::translate(Access *a) {
   Value ret;
   if (a->index.size() == 0) {
-    // 是个全局常量
-    assert(analyst.const_map.find(a->ident) != analyst.const_map.end());
-    Type element_type = DEFAULT_ELEMENT_TYPE;
-    Attribute attr = builder.getFloatAttr(element_type, analyst.const_map[a->ident]);
-    arith::ConstantOp op = builder.create<arith::ConstantOp>(loc(a->loc), element_type, attr);
-    ret = op.getResult();
+    // 是个全局常量 / 临时变量
+    if (auto it = analyst.const_map.find(a->ident); it != analyst.const_map.end()) {
+      // 常量
+      Type element_type = DEFAULT_ELEMENT_TYPE;
+      Attribute attr = builder.getFloatAttr(element_type, analyst.const_map[a->ident]);
+      arith::ConstantOp op = builder.create<arith::ConstantOp>(loc(a->loc), element_type, attr);
+      ret = op.getResult();
+    } else {
+      // 变量
+      ret = symbol_table.lookup(a->ident);
+    }
   } else {
-    Value v = symbol_table.lookup(a->ident);
-    LoadOp op = builder.create<LoadOp>(loc(a->loc), v, a->index);
-    ret = op.getResult();
-    // 不更新符号表!
+    std::string str = std::string(a->ident) + vec_str(a->index);
+    ret = symbol_table.lookup(str);
   }
   return ret;
 }

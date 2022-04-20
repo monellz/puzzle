@@ -31,7 +31,7 @@ inline int64_t to_dec(std::string_view sv) { return (int64_t)strtol(sv.data(), n
 inline double to_double(std::string_view sv) { return strtod(sv.data(), nullptr); }
 
 template <typename T>
-std::string vec_str(std::vector<T> &vec) {
+std::string vec_str(const std::vector<T> &vec) {
   if (vec.size() == 0)
     return "[]";
   else {

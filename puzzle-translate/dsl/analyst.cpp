@@ -10,6 +10,23 @@ void Analyst::work(Module *m) {
   // dbg(downstream_stencil);
 
   // 获得每个kernel内部stencil的调用顺序
+  auto stencil_in = [&]() {
+    std::unordered_map<std::string_view, std::unordered_set<std::string_view>> in;
+    for (auto &[sident, sinfo] : stencil_info) {
+      in[sident] = sinfo.in;
+    }
+    return in;
+  }();
+  auto stencil_out = [&]() {
+    std::unordered_map<std::string_view, std::unordered_set<std::string_view>> out;
+    for (auto &[sident, sinfo] : stencil_info) {
+      out[sident] = sinfo.out;
+    }
+    return out;
+  }();
+  // dbg(stencil_in);
+  // dbg(stencil_out);
+
   for (auto &[kident, kinfo] : kernel_info) {
     // dbg(kident);
     auto _stencil_in = stencil_in;
@@ -43,7 +60,7 @@ void Analyst::work(Module *m) {
     while (index < stack.size()) {
       auto stencil = stack[index];
       index++;
-      call_order[kident].push_back(stencil);
+      kinfo.call_order.push_back(stencil);
       assert(_stencil_out[stencil].size() == 1);
       auto stencil_out = *_stencil_out[stencil].begin();
       // stencil_out被计算出来
@@ -65,10 +82,26 @@ void Analyst::work(Module *m) {
       // dbg(index);
     }
 
-    // dbg(call_order);
-    for (auto stencil : call_order[kident]) {
-      stencil_rank[stencil] = kinfo.rank;
+    // dbg(kinfo.call_order);
+    for (auto stencil : kinfo.call_order) {
+      stencil_info[stencil].rank = kinfo.rank;
     }
+
+    // 计算额外的buf
+    std::unordered_set<std::string_view> total_param;
+    for (auto in : kinfo.in)
+      total_param.insert(in);
+    for (auto out : kinfo.out)
+      total_param.insert(out);
+    for (auto stencil : kinfo.call_order) {
+      for (auto s_out : stencil_info[stencil].out) {
+        if (total_param.find(s_out) == total_param.end()) {
+          total_param.insert(s_out);
+          kinfo.buf.push_back(s_out);
+        }
+      }
+    }
+    // dbg(kinfo.buf);
   }
 }
 
@@ -86,7 +119,6 @@ void Analyst::analyze(Stencil *s) {
   current_stencil_ident = s->ident;
   analyze(s->body.get());
   current_stencil_ident = DEFAULT_STENCIL_IDENT;
-  current_value.clear();
 }
 void Analyst::analyze(Kernel *k) {
   auto &info = kernel_info[k->ident];
@@ -122,27 +154,17 @@ void Analyst::analyze(Block *b) {
   }
 }
 
-void Analyst::analyze(If *i) {
-  current_if_stack.push_back(i);
-  analyze(i->cond.get());
-  analyze(i->on_true.get());
-  if (i->on_false) {
-    analyze(i->on_false.get());
-  }
-  current_if_stack.pop_back();
-}
+void Analyst::analyze(If *i) { llvm_unreachable("no if"); }
 
 void Analyst::analyze(Assign *a) {
   assert(a->index.size() > 0);
-  stencil_out[current_stencil_ident].insert(a->ident);
-  std::string str = std::string(a->ident) + vec_str(a->index);
-  current_value.insert(str);
-  analyze(a->rhs.get());
-
-  if (current_if_stack.size() > 0) {
-    // 现在在一个if之中
-    if_info[current_if_stack.back()].phi_ident.insert(a->ident);
+  if (a->index.size() > 0) {
+    for (auto i : a->index)
+      assert(i == 0);
+    stencil_info[current_stencil_ident].out.insert(a->ident);
   }
+  std::string str = std::string(a->ident) + vec_str(a->index);
+  analyze(a->rhs.get());
 }
 
 void Analyst::analyze(FloatLit *f) {}
@@ -156,12 +178,9 @@ void Analyst::analyze(Select *f) {
 void Analyst::analyze(Access *a) {
   if (a->index.size() > 0) {
     // 对于grid的读操作
-    std::string str = std::string(a->ident) + vec_str(a->index);
-    if (current_value.find(str) == current_value.end()) {
-      stencil_in[current_stencil_ident].insert(a->ident);
-      downstream_stencil[a->ident].insert(current_stencil_ident);
-      current_value.insert(str);
-    }
+    stencil_info[current_stencil_ident].in.insert(a->ident);
+    stencil_info[current_stencil_ident].in_index[a->ident].insert(a->index);
+    downstream_stencil[a->ident].insert(current_stencil_ident);
   }
 }
 
