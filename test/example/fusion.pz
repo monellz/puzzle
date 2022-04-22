@@ -1,0 +1,18 @@
+lap_factor = 4.0;
+
+laplacian = stencil {
+  lap[0, 0] = phi[1, 0] + phi[-1, 0] + phi[0, 1] + phi[0, -1] - lap_factor * phi[0, 0];
+};
+
+final = stencil {
+  result[0, 0] = ((lap[1, 0] - lap[0, 0]) * (phi[1, 0] - phi[0, 0]) > 0.0)? 0.0 : (lap[1, 0] - lap[0, 0]);
+};
+
+
+filter = kernel<2> {
+  In: phi;
+  Out: result;
+  Pad: 2;
+  // Iter: 1;
+  Bound: [0, 0] -> [512, 512];
+};
