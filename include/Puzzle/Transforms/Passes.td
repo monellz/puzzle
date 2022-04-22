@@ -3,6 +3,7 @@
 
 include "mlir/Pass/PassBase.td"
 
+/*
 def StencilFusion: Pass<"puzzle-stencil-fusion", "func::FuncOp"> {
   let summary = "fusion stencil";
   let description = [{
@@ -27,7 +28,7 @@ def TimeInsertion: Pass<"puzzle-time-insertion", "func::FuncOp"> {
   let constructor = "mlir::puzzle::createTimeInsertionPass()";
 
   let options = [
-    Option<"iteration", "iter", "int64_t", /*default*/"-1", "iteration time">
+    Option<"iteration", "iter", "int64_t", "-1", "iteration time">
   ];
 }
 
@@ -54,6 +55,7 @@ def PuzzleToGPULowering: Pass<"puzzle-to-gpu-lowering", "ModuleOp"> {
   }];
   let constructor = "mlir::puzzle::createPuzzleToGPULoweringPass()";
 }
+*/
 
 
 #endif

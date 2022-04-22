@@ -9,6 +9,7 @@ using namespace mlir::puzzle;
 #include "Puzzle/IR/PuzzleOpsDialect.cpp.inc"
 
 namespace {
+// TODO: 有没有always inline的interface
 struct PuzzleInlinerInterface : public DialectInlinerInterface {
   using DialectInlinerInterface::DialectInlinerInterface;
   /// All call operations within puzzle can be inlined.
@@ -19,15 +20,6 @@ struct PuzzleInlinerInterface : public DialectInlinerInterface {
   bool isLegalToInline(Region *, Region *, bool, BlockAndValueMapping &) const final { return true; }
   /// Handle the given inlined terminator(toy.return) by replacing it with a new
   /// operation as necessary.
-  void handleTerminator(Operation *op, ArrayRef<Value> valuesToRepl) const final {
-    // Only "toy.return" needs to be handled here.
-    auto returnOp = cast<puzzle::ReturnOp>(op);
-
-    // Replace the values directly with the return operands.
-    assert(returnOp.getNumOperands() == valuesToRepl.size());
-    for (const auto &it : llvm::enumerate(returnOp.getOperands()))
-      valuesToRepl[it.index()].replaceAllUsesWith(it.value());
-  }
 };
 } // namespace
 
@@ -36,7 +28,6 @@ void PuzzleDialect::initialize() {
 #define GET_OP_LIST
 #include "Puzzle/IR/PuzzleOps.cpp.inc"
       >();
-  addTypes<GridType>();
   addInterfaces<PuzzleInlinerInterface>();
 }
 

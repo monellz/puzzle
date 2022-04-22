@@ -1,10 +1,10 @@
 add_mlir_dialect_library(MLIRPuzzleTransforms
-  StencilFusionPass.cpp
-  ShapeInferencePass.cpp
-  TimeInsertionPass.cpp
-  PuzzleToAffineLoweringPass.cpp
-  ReplaceAllocWithParamPass.cpp
-  PuzzleToGPULoweringPass.cpp
+  #StencilFusionPass.cpp
+  #ShapeInferencePass.cpp
+  #TimeInsertionPass.cpp
+  #PuzzleToAffineLoweringPass.cpp
+  #ReplaceAllocWithParamPass.cpp
+  #PuzzleToGPULoweringPass.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${PROJECT_SOURCE_DIR}/include/Puzzle
