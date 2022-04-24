@@ -1,5 +1,5 @@
 add_mlir_dialect_library(MLIRPuzzleTransforms
-  #StencilFusionPass.cpp
+  StencilFusionPass.cpp
   #ShapeInferencePass.cpp
   #TimeInsertionPass.cpp
   #PuzzleToAffineLoweringPass.cpp
@@ -11,7 +11,7 @@ add_mlir_dialect_library(MLIRPuzzleTransforms
 
   DEPENDS
   MLIRPuzzleTransformsIncGen
-  MLIRPuzzleOpInterfacesIncGen
+  #MLIRPuzzleOpInterfacesIncGen
 
   LINK_LIBS PUBLIC
   MLIRIR

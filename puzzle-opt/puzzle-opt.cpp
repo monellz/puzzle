@@ -17,7 +17,7 @@
 int main(int argc, char **argv) {
   mlir::registerAllPasses();
   // TODO: Register standalone passes here.
-  // mlir::puzzle::registerPuzzlePasses();
+  mlir::puzzle::registerPuzzlePasses();
 
   mlir::DialectRegistry registry;
   // clang-format off

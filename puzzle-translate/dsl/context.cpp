@@ -127,14 +127,17 @@ void DSLContext::translate(Stencil *s) {
   builder.setInsertionPointToStart(entry_block);
   // 生成一个stencil op需要的东西
   llvm::SmallVector<mlir::Value, 4> operands;
-  llvm::SmallVector<int64_t, 10> index_size;
+  llvm::SmallVector<int64_t, 10> input_offset;
+  int64_t cur_input_offset = 0;
+  input_offset.push_back(cur_input_offset);
   llvm::SmallVector<llvm::SmallVector<int64_t, 4>> index_array;
   extra_temp_var_names.clear();
   const int max_temp_var = 50;
   int num_temp_var = 0;
   extra_temp_var_names.reserve(max_temp_var);
   for (auto &[in_ident, in_index_set] : analyst.stencil_info[s->ident].in_index) {
-    index_size.push_back((int64_t)in_index_set.size());
+    cur_input_offset += in_index_set.size();
+    input_offset.push_back(cur_input_offset);
     operands.push_back(symbol_table.lookup(in_ident));
     for (auto &index : in_index_set) {
       index_array.push_back(llvm::SmallVector<int64_t, 4>(index.begin(), index.end()));
@@ -147,11 +150,11 @@ void DSLContext::translate(Stencil *s) {
   assert(analyst.stencil_info[s->ident].out.size() == 1);
 
   // 生成stencil op
-  StencilOp stencil_op = builder.create<StencilOp>(loc(s->loc), tensor_type, operands, index_size, index_array);
+  StencilOp stencil_op = builder.create<StencilOp>(loc(s->loc), tensor_type, operands, input_offset, index_array);
   {
     llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> stencil_scope(symbol_table);
     // 更新arg到symbol table
-    mlir::Block *body = stencil_op.getBody();
+    mlir::Block *body = &stencil_op.getBody().front();
     builder.setInsertionPointToStart(body);
     for (auto en : llvm::enumerate(extra_temp_var_names)) {
       symbol_table.insert(en.value(), body->getArgument(en.index()));

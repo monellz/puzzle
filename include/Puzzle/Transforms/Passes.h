@@ -7,7 +7,7 @@ namespace mlir::puzzle {
 
 class PuzzleDialect;
 
-// std::unique_ptr<Pass> createStencilFusionPass();
+std::unique_ptr<Pass> createStencilFusionPass();
 // std::unique_ptr<Pass> createShapeInferencePass();
 // std::unique_ptr<Pass> createTimeInsertionPass();
 // std::unique_ptr<Pass> createPuzzleToAffineLoweringPass();

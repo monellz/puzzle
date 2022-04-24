@@ -21,36 +21,39 @@ def Puzzle_StencilOp : Puzzle_Op<"stencil", [
 
   let arguments = (ins
     Variadic<F64Tensor>:$operands,
-    I64ArrayAttr:$index_size,
+    I64ArrayAttr:$input_offset,
     IndexListArrayAttr:$index_array
   );
   let results = (outs Variadic<F64Tensor>:$results);
   let regions = (region SizedRegion<1>:$region);
 
   let builders = [
-    OpBuilder<(ins "TypeRange":$res_types, "ValueRange":$operands, "ArrayRef<int64_t>":$index_size, "ArrayRef<SmallVector<int64_t, 4>>":$index_array), [{
+    OpBuilder<(ins "TypeRange":$res_types, "ValueRange":$operands, "ArrayRef<int64_t>":$input_offset, "ArrayRef<SmallVector<int64_t, 4>>":$index_array), [{
       // 这个builder主要是为了在这里构造region和block
       $_state.addOperands(operands);
-      $_state.addAttribute(getIndexSizeAttrName($_state.name), $_builder.getI64ArrayAttr(index_size));
+      $_state.addAttribute(getInputOffsetAttrName($_state.name), $_builder.getI64ArrayAttr(input_offset));
       llvm::SmallVector<Attribute, 10> array_attrs(index_array.size());
       llvm::transform(index_array, array_attrs.begin(), [&](SmallVector<int64_t, 4> v) { return $_builder.getI64ArrayAttr(v); });
       $_state.addAttribute(getIndexArrayAttrName($_state.name), $_builder.getArrayAttr(array_attrs));
       auto region = $_state.addRegion();
       region->push_back(new Block());
+      $_state.addTypes(res_types);
+      if (input_offset.size() == 0 && index_array.size() == 0) return;
       llvm::SmallVector<mlir::Location> locs;
-      for (auto en: llvm::enumerate(operands)) {
-        for (int64_t i = 0; i < index_size[en.index()]; ++i) {
-          locs.push_back(en.value().getLoc());
+      assert(input_offset.size() >= 1);
+      assert(index_array.size() >= 1);
+      for (size_t i = 0; i < input_offset.size() - 1; ++i) {
+        for (int j = input_offset[i]; j < input_offset[i + 1]; ++j) {
+          locs.push_back(operands[i].getLoc());
         }
       }
       llvm::SmallVector<mlir::Type> block_arg_types(locs.size(), operands[0].getType().cast<ShapedType>().getElementType());
       region->front().addArguments(block_arg_types, locs);
-      $_state.addTypes(res_types);
     }]>
   ];
 
   let extraClassDeclaration = [{
-    Block *getBody() { return &getRegion().front(); }
+    Region &getBody() { return getRegion(); }
   }];
 
   // let skipDefaultBuilders = 1;
